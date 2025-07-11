@@ -982,6 +982,79 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
             }
         }
 
+        // Function to add a new day to the itinerary
+        function addDay() {
+            showModal('Enter the date for the new day (YYYY-MM-DD):', 'prompt', async (confirmed, dateString) => {
+                if (confirmed && dateString) {
+                    const trimmedDate = dateString.trim();
+                    if (!isValidDate(trimmedDate)) {
+                        showModal('Invalid date format. Please use YYYY-MM-DD.', 'alert');
+                        return;
+                    }
+                    if (window.itineraryData[trimmedDate]) {
+                        showModal(`A day for ${formatDate(trimmedDate)} already exists.`, 'alert');
+                        return;
+                    }
+
+                    const newDayData = {
+                        date: trimmedDate,
+                        location: 'New Location',
+                        parkHours: 'N/A',
+                        lightningLaneMultipass: '',
+                        lightningLaneTiers: { tier1: '', tier2: '' },
+                        individualLightningLanes: '',
+                        ropeDrop: '',
+                        food: { snacks: [], lunchDinner: [] },
+                        eveningShow: ''
+                    };
+
+                    window.itineraryData[trimmedDate] = newDayData;
+                    await window.saveDataToFirestore('dailyItinerary', trimmedDate, newDayData);
+                    renderDayTabs();
+                    // Activate the new tab
+                    const newTabHeader = document.querySelector(`.tab-header[data-date="${trimmedDate}"]`);
+                    if (newTabHeader) {
+                        newTabHeader.click();
+                    }
+                    updateStatus(`Day for ${formatDate(trimmedDate)} added successfully!`);
+                }
+            });
+        }
+
+        // Function to remove a day from the itinerary
+        async function removeDay() {
+            if (!window.activeDayTab) {
+                showModal('Please select a day tab to remove first.', 'alert');
+                return;
+            }
+
+            const dateToRemove = window.activeDayTab.dataset.date;
+            showModal(`Are you sure you want to remove the itinerary for ${formatDate(dateToRemove)}? This cannot be undone.`, 'confirm', async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        await deleteDoc(doc(window.db, `artifacts/${appId}/users/${window.userId}/itineraryData`, dateToRemove));
+                        delete window.itineraryData[dateToRemove];
+                        renderDayTabs();
+                        // Select the first available tab or clear details if none left
+                        const sortedDates = Object.keys(window.itineraryData).sort();
+                        if (sortedDates.length > 0) {
+                            const firstTabHeader = document.querySelector(`.tab-header[data-date="${sortedDates[0]}"]`);
+                            if (firstTabHeader) {
+                                firstTabHeader.click();
+                            }
+                        } else {
+                            displayDayDetails(null); // Clear content
+                        }
+                        updateStatus(`Day for ${formatDate(dateToRemove)} removed successfully!`);
+                    } catch (error) {
+                        console.error("Error removing document: ", error);
+                        updateStatus(`Error removing day: ${error.message}`, true);
+                    }
+                }
+            });
+        }
+
+
         // Initialize Firebase when the window loads
         window.onload = initializeFirebase;
     </script>
@@ -1012,6 +1085,7 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                     <ul id="hotel-info" class="list-disc list-inside">
                         <!-- Hotel details will be injected here -->
                     </ul>
+                    <button id="add-hotel-btn" class="btn btn-primary mt-4">Add Hotel</button>
                 </div>
                 <div>
                     <h3 class="text-xl font-semibold mb-2 text-purple-600">Other Services</h3>
@@ -1023,6 +1097,11 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
 
         <div class="mb-6">
             <h2 class="text-2xl font-semibold text-center mb-4 text-indigo-700">Daily Itinerary</h2>
+            <!-- Day Management Buttons -->
+            <div class="flex justify-center gap-4 mb-4">
+                <button id="add-day-btn" class="btn btn-primary">Add Day</button>
+                <button id="remove-day-btn" class="btn btn-danger">Remove Selected Day</button>
+            </div>
             <!-- Tab Headers -->
             <div id="day-tabs" class="flex flex-wrap justify-center overflow-x-auto whitespace-nowrap pb-2 -mb-1">
                 <!-- Day tab headers will be injected here by JavaScript -->
