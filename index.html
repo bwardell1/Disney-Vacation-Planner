@@ -3,1055 +3,930 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Disney Trip Planner</title>
+    <title>Disney World Itinerary</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom CSS for overall layout, cards, and tabs */
         body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(to bottom right, #e0f2fe, #f3e8ff); /* Light blue to light purple gradient */
-            min-height: 100vh;
+            background-color: #f0f2f5;
             color: #333;
         }
         .container {
-            max-width: 960px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
         }
         .card {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            background-color: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            cursor: grab; /* Indicate draggable */
         }
-        .header-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #333;
-            text-align: center;
-            margin-bottom: 2rem;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #edf2f7;
-            padding-bottom: 0.5rem;
-        }
-        .data-label {
-            font-weight: 600;
-            color: #2d3748;
-        }
-        .data-value {
-            color: #4a5568;
-        }
-        .table-header {
-            background-color: #e2e8f0;
-            color: #2d3748;
-            font-weight: 600;
-        }
-        .table-row:nth-child(odd) {
-            background-color: #f7fafc;
-        }
-        .table-row:hover {
-            background-color: #edf2f7;
-        }
-        .tab-button {
+        .tab-header {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4f46e5; /* Indigo 600 */
             padding: 0.75rem 1.25rem;
-            border-radius: 8px;
+            border-radius: 0.75rem 0.75rem 0 0; /* Rounded top corners */
             font-weight: 600;
             transition: all 0.2s ease-in-out;
-            white-space: nowrap; /* Prevent text wrapping */
             cursor: pointer;
-            border: none;
-        }
-        .tab-button-active {
-            background-color: #667eea;
-            color: white;
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-        }
-        .tab-button-inactive {
-            background-color: #e2e8f0;
-            color: #4a5568;
-        }
-        .tab-button-inactive:hover {
-            background-color: #cbd5e0;
-        }
-        /* Styles for editable fields */
-        .editable-field {
-            cursor: pointer;
-            display: inline-block; /* To allow padding/hover effect */
-            padding: 2px 4px;
-            border-radius: 4px;
-        }
-        .editable-field:hover {
-            background-color: #f0f4f8;
-        }
-        .edit-controls {
+            margin-right: 0.25rem; /* Small gap between tabs */
+            border: 1px solid #c7d2fe; /* Indigo 200 */
+            border-bottom: none; /* No bottom border for tab effect */
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 4px;
+            justify-content: center;
+            flex-grow: 1; /* Allow tabs to grow */
+            min-width: 120px; /* Minimum width for each tab */
+            text-align: center;
         }
-        .edit-input {
-            padding: 6px 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-            flex-grow: 1;
+        .tab-header:hover {
+            background-color: #c7d2fe; /* Indigo 200 */
         }
-        .edit-save-btn {
-            background-color: #22c55e; /* green-500 */
+        .tab-header.active {
+            background-color: #6366f1; /* Indigo 500 */
             color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-color: #6366f1; /* Match background */
+            transform: translateY(-2px); /* Slight lift */
+            z-index: 10; /* Bring active tab to front */
         }
-        .edit-save-btn:hover {
-            background-color: #16a34a; /* green-600 */
+        .tab-content-container {
+            background-color: #fff;
+            border-radius: 0 1rem 1rem 1rem; /* Rounded bottom and right top corner */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-top: -0.25rem; /* Overlap with tab headers */
+            border: 1px solid #c7d2fe; /* Match tab border */
         }
-        .edit-cancel-btn {
-            background-color: #ef4444; /* red-500 */
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
+        .detail-item strong {
+            color: #4f46e5; /* Indigo 600 */
         }
-        .edit-cancel-btn:hover {
-            background-color: #dc2626; /* red-600 */
+        .list-item {
+            margin-bottom: 0.25rem;
         }
-        .warning-message {
-            background-color: #fff3cd; /* yellow-100 */
-            border-left: 4px solid #ffc107; /* yellow-500 */
-            color: #856404; /* yellow-900 */
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
+        [contenteditable="true"] {
+            outline: 1px dashed #a78bfa; /* Purple 300 for editable fields */
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            min-height: 1.5rem; /* Ensure visibility for empty editable fields */
         }
-        .add-button {
-            background-color: #4CAF50; /* Green */
-            color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.2s;
+        [contenteditable="true"]:focus {
+            outline: 2px solid #6d28d9; /* Deep purple on focus */
+            background-color: #f5f3ff; /* Light purple background on focus */
+        }
+        .status-message {
+            text-align: center;
             margin-top: 1rem;
+            font-weight: 600;
+            color: #10b981; /* Green 500 */
         }
-        .add-button:hover {
-            background-color: #45a049;
-        }
-
-        /* Drag and Drop styles */
-        .card.opacity-50 {
-            opacity: 0.5;
-        }
-        .card.drag-over-top {
-            border-top: 3px solid #667eea;
-        }
-        .card.drag-over-bottom {
-            border-bottom: 3px solid #667eea;
+        .status-message.error {
+            color: #ef4444; /* Red 500 */
         }
     </style>
-</head>
-<body>
-    <div id="app" class="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 font-inter text-gray-800 p-4 sm:p-6 lg:p-8">
-        <h1 class="header-title">Our Disney Trip Planner</h1>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        <!-- Loading Indicator -->
-        <div id="loading-indicator" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-400 to-pink-500 text-white text-2xl font-bold">
-            Loading Disney Magic...
-        </div>
+        // Global variables for Firebase instances and user ID
+        window.firebaseApp = null;
+        window.db = null;
+        window.auth = null;
+        window.userId = null;
+        window.itineraryData = {}; // Global store for daily itinerary data
+        window.tripOverview = {}; // Global store for trip overview data
+        window.activeDayTab = null; // To keep track of the currently active tab
 
-        <!-- Error Message -->
-        <div id="error-message" class="hidden flex items-center justify-center min-h-screen bg-red-500 text-white text-center p-4">
-            <p id="error-text"></p>
-        </div>
+        // Declare DOM element variables globally
+        let flightArrivalInfo;
+        let flightDepartureInfo;
+        let hotelInfoList;
+        let carServiceInfo;
+        let strollerRentalInfo;
+        let dayTabsContainer;
+        let itineraryDetails;
+        let currentDayDate;
+        let detailLocation;
+        let detailParkHours;
+        let detailLLTier1;
+        let detailLLTier2;
+        let detailILL;
+        let detailRopeDrop;
+        let detailSnacks;
+        let detailLunchDinner;
+        let detailEveningShow;
+        let userIdDisplay;
 
-        <!-- Main Content Area (hidden until data is loaded) -->
-        <div id="main-content" class="hidden">
-            <div id="config-warning" class="warning-message hidden">
-                <strong>Warning:</strong> Firebase is not fully configured. Your data will not be saved. Please follow the instructions in the HTML file's script section to set up your Firebase project.
-            </div>
 
-            <!-- Container for draggable sections -->
-            <div id="sections-container" class="flex flex-col gap-4">
-                <!-- Sections will be dynamically inserted here by JavaScript -->
-            </div>
-
-            <div class="text-center text-gray-600 text-sm mt-8">
-                <p>User ID: <span id="user-id-display"></span></p>
-                <p>Click on any text to edit it! Drag and drop sections to reorder.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase SDKs loaded as regular scripts -->
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
-
-    <script>
-        // This comment is a small change to ensure a new file version for caching purposes.
-        // --- IMPORTANT: CONFIGURE YOUR FIREBASE PROJECT HERE ---
-        // To make this app work outside of the Gemini Canvas, you need to
-        // replace the placeholder values below with your actual Firebase project's configuration.
-        //
-        // 1. Go to your Firebase project in the Firebase Console: https://console.firebase.google.com/
-        // 2. Click on the "Project settings" (gear icon) next to "Project overview".
-        // 3. Under "Your apps", select "Web" (if you haven't added a web app, click the "</>" icon to add one).
-        // 4. Copy the `firebaseConfig` object provided by Firebase. It looks like:
-        //    const firebaseConfig = {
-        //      apiKey: "AIza...",
-        //      authDomain: "your-project-id.firebaseapp.com",
-        //      projectId: "your-project-id",
-        //      storageBucket: "your-project-id.appspot.com",
-        //      messagingSenderId: "...",
-        //      appId: "1:..."
-        //    };
-        // 5. Paste that object below, replacing the placeholder.
-        // 6. The `appId` variable below should match the `projectId` from your firebaseConfig.
-        //    The `initialAuthToken` is not needed for standalone use; anonymous sign-in will be used.
-
-        const appId = 'disney-trip-app'; // This should be your Firebase Project ID (e.g., "my-disney-trip-12345")
-        const firebaseConfig = {
-            apiKey: "AIzaSyBUDwiaftNkP09VWy_r75YrCYdDKxOhrF0",
-            authDomain: "disney-trip-app.firebaseapp.com",
-            projectId: "disney-trip-app",
-            storageBucket: "disney-trip-app.firebasestorage.app",
-            messagingSenderId: "977685824042",
-            appId: "1:977685824042:web:e6f7f405c107ad4f883953",
-            measurementId: "G-CPQC346E90"
+        // Debounce function to limit how often save operations are called
+        let saveTimeout = null;
+        window.debounceSave = (func, delay = 1000) => {
+            return (...args) => {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => func.apply(this, args), delay);
+            };
         };
-        // The initialAuthToken is only used in the Canvas environment.
-        // For standalone use, the app will sign in anonymously.
-        const initialAuthToken = null;
-        // --- END FIREBASE CONFIGURATION ---
 
-
-        // Global variables for application state
-        let db;
-        let auth;
-        let userId = null;
-        let tripData = null;
-        let activeDayTab = 0; // Index of the active day in dailyPlans array
-        let activeFoodTab = 'snacks'; // 'snacks', 'lunchDinner', 'topPriorities'
-        let editingField = { element: null, section: null, row: null, column: null, originalValue: null }; // Tracks the currently edited field
-        let draggedElement = null; // Stores the HTML element being dragged
-
-        // Initial data structure mirroring the React app's initialTripData
-        const initialTripData = {
-            flightDetails: {
-                flight1: { flightNum: "UA2451", departureDate: "23-Jul", arrivalDate: "24-Jul", departureTime: "6:25 PM", arrivalTime: "7:18 PM" },
-                flight2: { flightNum: "UA1818", departureDate: "23-Jul", arrivalDate: "24-Jul", departureTime: "6:25 PM", arrivalTime: "7:18 PM" }
-            },
-            hotelConfirmation: [
-                { hotel: "Sheraton Suites Airport", confirmation: "13941190560" },
-                { hotel: "All Star Music", confirmation: "LLCOMCHAC297WB" },
-                { hotel: "Polynesian", confirmation: "WOW App" }
-            ],
-            otherInfo: {
-                carService: "Uber/Lyft",
-                strollerRental: "Baby Quip (7/24/25 6-8 pm Poly)"
-            },
-            generalParkHours: {
-                magicKingdom: { open: "8:30 AM", close: "11:00 PM" },
-                epcot: { open: "8:30 AM", close: "9:00 PM" },
-                hollywoodStudios: { open: "8:30 AM", close: "9:00 PM" },
-                animalKingdom: { open: "7:30 AM", close: "6:00 PM" }
-            },
-            dailyPlans: [
-                {
-                    day: "Thursday 7/24",
-                    park: "Check In Day Blizzard Beach",
-                    parkHours: "10:00 AM to 7:00 PM",
-                    lightningLane: [],
-                    snacks: [],
-                    topPriorities: [],
-                    lunchDinner: [],
-                    eveningShow: "Magic Kingdom Fireworks from Poly"
-                },
-                {
-                    day: "Friday 7/25",
-                    park: "Check In Day Typhoon Lagoon",
-                    parkHours: "10:00 AM to 7:00 PM",
-                    lightningLane: [],
-                    snacks: [],
-                    topPriorities: [],
-                    lunchDinner: [],
-                    eveningShow: ""
-                },
-                {
-                    day: "Saturday 7/26",
-                    park: "Animal Kingdom & Hollywood",
-                    parkHours: "7:30 AM to 7:00 PM",
-                    lightningLane: [
-                        { type: "Tier 1", item: "Hollywood Studios Starting at Noon", details: "Slinky Dog, Toy Story Mania, Earliest available Tier 2 (burner ride)" }
-                    ],
-                    snacks: [
-                        { item: "AK - Satuli Cheeseburger Steamed Buns" },
-                        { item: "AK - French Fries with Pulled Pork and Cheese - Flame Tree" },
-                        { item: "HW - Ronto Wrap - Galaxy's Edge" }
-                    ],
-                    topPriorities: [],
-                    lunchDinner: [
-                        { item: "AK - Satuli Canteen - Noodle Bowl" },
-                        { item: "Cheeseburger Steamed Pods" },
-                        { item: "Woody's Round up?" },
-                        { item: "Woody's Lunch box?" }
-                    ],
-                    eveningShow: "Fantasmic!: 9 pm, World of Ani: 9 pm"
-                },
-                {
-                    day: "Sunday 7/27",
-                    park: "Rest",
-                    parkHours: "",
-                    lightningLane: [],
-                    snacks: [],
-                    topPriorities: [],
-                    lunchDinner: [],
-                    eveningShow: ""
-                },
-                {
-                    day: "Monday 7/28",
-                    park: "Epcot",
-                    parkHours: "8:30 AM to 11:00 PM Extended Evening",
-                    lightningLane: [
-                        { type: "Tier 2", item: "Test Track" },
-                        { type: "Tier 2", item: "Spaceship Earth" },
-                        { type: "Tier 2", item: "Nemo & Friends (burner ride)" }
-                    ],
-                    snacks: [
-                        { item: "Gaston's Tavern's Creme Brulee Croissant" },
-                        { item: "Cheeseburger Spring Rolls - Adventure Land" },
-                        { item: "Chipotle BBQ Loaded Fries - Casey's Corner" },
-                        { item: "Corndog - Sleepy Hollow Refreshments" }
-                    ],
-                    topPriorities: [],
-                    lunchDinner: [
-                        { item: "Sleep Hollow - Chicken & Waffle" },
-                        { item: "Cosmic Rays - Truffle French Onion Burger" }
-                    ],
-                    eveningShow: "Luminous: 9 PM"
-                },
-                {
-                    day: "Tuesday 7/29",
-                    park: "Magic Kingdom",
-                    parkHours: "8:30 AM to 11:00 PM",
-                    lightningLane: [
-                        { type: "Tier 2", item: "Jungle Cruise" },
-                        { type: "Tier 2", item: "Pirates" },
-                        { type: "Tier 2", item: "Magic Carpets of Aladdin (burner ride)" }
-                    ],
-                    snacks: [],
-                    topPriorities: [],
-                    lunchDinner: [],
-                    eveningShow: "Disney Starlight: 9 or 11 PM"
-                },
-                {
-                    day: "07/30/2025",
-                    park: "Pool",
-                    parkHours: "",
-                    lightningLane: [],
-                    snacks: [],
-                    topPriorities: [],
-                    lunchDinner: [],
-                    eveningShow: ""
+        // Function to update status messages
+        window.updateStatus = (message, isError = false) => {
+            const statusDiv = document.getElementById('status-message');
+            if (statusDiv) {
+                statusDiv.textContent = message;
+                statusDiv.classList.toggle('error', isError);
+                statusDiv.classList.remove('hidden');
+                // Hide after a few seconds unless it's an error
+                if (!isError) {
+                    setTimeout(() => {
+                        statusDiv.classList.add('hidden');
+                    }, 3000);
                 }
-            ],
-            individualLightningLane: ["Guardians?", "Tron"],
-            ropeDrop: ["Flight of Passage", "Frozen", "Peter Pan"],
-            // New property to store the order of sections
-            sectionOrder: ["flightDetails", "hotelConfirmation", "otherInfo", "generalParkHours", "dailyPlans", "individualLightningLane", "ropeDrop"]
+            }
         };
 
-        // Get references to DOM elements
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const errorMessage = document.getElementById('error-message');
-        const errorText = document.getElementById('error-text');
-        const mainContent = document.getElementById('main-content');
-        const sectionsContainer = document.getElementById('sections-container'); // New container for draggable sections
-        const userIdDisplay = document.getElementById('user-id-display');
-        const configWarning = document.getElementById('config-warning');
-
-        // Functions to manage UI visibility (loading, error, content)
-        function showLoading() {
-            loadingIndicator.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
-            mainContent.classList.add('hidden');
-        }
-
-        function showError(message) {
-            loadingIndicator.classList.add('hidden');
-            errorMessage.classList.remove('hidden');
-            errorText.textContent = message;
-            mainContent.classList.add('hidden');
-        }
-
-        function showContent() {
-            loadingIndicator.classList.add('hidden');
-            errorMessage.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-        }
-
-        // --- Firebase Initialization and Data Fetching ---
-        function initFirebaseAndFetchData() {
-            showLoading(); // Show loading indicator initially
+        // Initialize Firebase and authenticate
+        async function initializeFirebase() {
             try {
-                // Check if firebaseConfig is provided by the user
-                if (!firebaseConfig || Object.keys(firebaseConfig).length === 0 || appId === 'your-firebase-project-id') {
-                    console.warn("Firebase configuration is missing or incomplete. Data will not be saved.");
-                    configWarning.classList.remove('hidden'); // Show the warning message
-                    tripData = initialTripData; // Load initial data for display
-                    userId = "NOT_CONFIGURED"; // Indicate Firebase is not set up
-                    userIdDisplay.textContent = userId;
-                    renderApp(); // Render the app with initial data
-                    showContent(); // Show main content
-                    return; // Stop Firebase initialization
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config is empty. Cannot initialize Firebase.");
+                    updateStatus("Error: Firebase configuration missing.", true);
+                    return;
                 }
 
-                // Initialize Firebase using the global 'firebase' object
-                const app = firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore(app); // Access firestore from the app instance
-                auth = firebase.auth(app);   // Access auth from the app instance
+                window.firebaseApp = initializeApp(firebaseConfig);
+                window.db = getFirestore(window.firebaseApp);
+                window.auth = getAuth(window.firebaseApp);
 
-                // Listen for authentication state changes
-                firebase.auth().onAuthStateChanged(async (user) => { // Use firebase.auth() here
+                // Assign DOM elements here, ensuring they are available after the DOM loads
+                flightArrivalInfo = document.getElementById('flight-arrival-info');
+                flightDepartureInfo = document.getElementById('flight-departure-info');
+                hotelInfoList = document.getElementById('hotel-info');
+                carServiceInfo = document.getElementById('car-service-info');
+                strollerRentalInfo = document.getElementById('stroller-rental-info');
+                dayTabsContainer = document.getElementById('day-tabs');
+                itineraryDetails = document.getElementById('itinerary-details');
+                currentDayDate = document.getElementById('current-day-date');
+                detailLocation = document.getElementById('detail-location');
+                detailParkHours = document.getElementById('detail-park-hours');
+                detailLLTier1 = document.getElementById('detail-ll-tier1');
+                detailLLTier2 = document.getElementById('detail-ll-tier2');
+                detailILL = document.getElementById('detail-ill');
+                detailRopeDrop = document.getElementById('detail-rope-drop');
+                detailSnacks = document.getElementById('detail-snacks');
+                detailLunchDinner = document.getElementById('detail-lunch-dinner');
+                detailEveningShow = document.getElementById('detail-evening-show');
+                userIdDisplay = document.getElementById('user-id-display');
+
+
+                // Sign in using custom token if available, otherwise anonymously
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(window.auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(window.auth);
+                }
+
+                onAuthStateChanged(window.auth, async (user) => {
                     if (user) {
-                        userId = user.uid;
-                        userIdDisplay.textContent = userId; // Display user ID
-                        console.log("Authenticated with user ID:", userId); // Log successful authentication
-                        fetchTripData(); // Fetch trip data once authenticated
-                    } else {
-                        // Attempt to sign in anonymously if no user is signed in
-                        try {
-                            console.log("Attempting anonymous sign-in...");
-                            await firebase.auth().signInAnonymously(); // Use firebase.auth() here
-                        } catch (e) {
-                            // Log the full error object for detailed debugging
-                            console.error("Error during anonymous authentication:", e);
-                            showError(`Authentication failed: ${e.message}. Please ensure Firebase Authentication (Anonymous) is enabled in your project and check your browser's console for more details.`);
+                        window.userId = user.uid;
+                        if (userIdDisplay) { // Check if element exists before setting textContent
+                            userIdDisplay.textContent = `User ID: ${window.userId}`;
                         }
+                        console.log("Firebase initialized and authenticated. User ID:", window.userId);
+                        updateStatus("Loading itinerary...");
+                        await loadItineraryFromFirestore();
+                    } else {
+                        console.log("No user signed in.");
+                        window.userId = null;
+                        if (userIdDisplay) { // Check if element exists before setting textContent
+                            userIdDisplay.textContent = 'User ID: Not authenticated';
+                        }
+                        updateStatus("Not authenticated. Please refresh if issues persist.", true);
                     }
                 });
-            } catch (e) {
-                console.error("Error initializing Firebase:", e);
-                showError("Failed to initialize Firebase. Check your console for details and ensure your firebaseConfig is correct.");
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                updateStatus(`Error initializing app: ${error.message}`, true);
             }
         }
 
-        // Fetches trip data from Firestore and sets up a real-time listener
-        function fetchTripData() {
-            // Firestore document reference path
-            const docPath = `artifacts/${appId}/users/${userId}/disneyTrip/myTripDoc`;
-            const docRef = firebase.firestore().doc(db, docPath); // Use firebase.firestore().doc()
-            console.log("Attempting to fetch data from Firestore path:", docPath); // Log the path
+        // Function to parse the initial CSV data
+        const csvData = `Our Disney Trip,,,,,,,,,,,,,
+Flight # ,Arrival,2025-07-23,UA2451,18:25:00,,,,General Park Hours,Open,Close,,,
+Flight #,Departure,2025-07-30,UA1818,19:18:00,,,,Magic Kingdom,08:30:00,23:00:00,,,
+Hotel Confirmation,Sheraton Suites Airport,"1394156560
+H-CQMG6XC297WB",2025-07-23,,,,,Epcot,08:30:00,21:00:00,,,
+Hotel Confirmation,All Star Music,WDW App,2025-07-24,,,,,Hollywood,08:30:00,21:00:00,,,
+Hotel Confirmation,Polyuneasian,WDW App,Fri 7/25- Wed 7/30,,,,,Animal Kingdom,07:30:00,18:00:00,,,
+Car Service,Uber/Lyft,,,,,,,,,,,,
+Stroller Rental,"Baby Quip 
+7/24/25 6-8 am Poly",,,,,,,,,,,,
+DAY,2025-07-24,,2025-07-25,,2025-07-26,,2025-07-27,,2025-07-28,,2025-07-29,,2025-07-30
+PARK/LOCATION,"Check In Day
+Blizzard Beach",,"Check In Day
+Typhoon Lagoon",,"Animal Kingdom
+& Hollywood",,Rest,,Epcot,,Magic Kingdom,,Poly Pool
+PARK HOURS,10:00 AM to 7:00 PM,,10:00 AM to 7:00 PM,,"7:30 AM to 7:00 pm
+8:30 am to 9:00 pm",,,,"8:30 AM to 11 pm
+Extended Evening",,8:30 am to 11 pm,,
+Arrival Time,,,,,,,,,,,,,
+Lightning Lane MultiPass,,,,,"Hollywood Studios
+starting at Noon",,,,,,,,
+Tier 1,,,,,Slinky Dog,,,,Test Track,,Jungle Cruise,,
+Tier 2,,,,,Toy Story Mania,,,,Spaceship Earth,,Pirates,,
+Tier 2,,,,,"Earliest avaiable Tier 2
+(burner ride)",,,,"Nemo & Friends 
+(Burner Ride)",,Magic Carpets of Aladdin (burner ride),,
+Individaul Lighting Lane,,,,,,,,,Guardians?,,Tron,,
+,,,,,,,,,,,,,
+Rope Drop,,,,,Flight of Passage,,,,Frozen,,Peter Pan,,
+,,,,,,,,,,,,,
+Snacks,,,,,,,,,,,,,
+Top 3 Priorities,,,,,"AK - Satu'Ii
+Cheeseburger Steamed Pods",,,,,,Gaston's Tavern's Creme Brulee Croissant,,
+,,,,,AK - French Fries with Pulled Pork and Cheese - Flame Tree,,,,,,Cheeseburger Spring Rolls - Adventure Land,,
+,,,,,HW - Ronto Wrap - Galxys Edge,,,,,,Chipotle BBQ Loaded Fries - Casey's Corner,,
+,,,,,,,,,,,Corndog - Sleepy Hollow Refreshments,,
+Lunch/Dinner,,,,,,,,,,,,,
+Must-Do,,,,,,,,,,,,,
+,,,,,"AK - Satu'li Canteen - Noodle Bowl
+Cheeseburger Steamed Pods",,,,,,Sleep Hollow - Chicke & Waffle,,
+,,,,,,,,,,,Cosmic Rays - Truffle French Onion Burger,,
+,,,,,,,,,,,,,
+,,,,,Woody's Round up? ,,,,,,,,
+,,,,,Woody's Lunch box? ,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+Snack,,,,,,,,,,,,,
+Evening Show,Magic Kingdom Fireworks from Poly,,,,"Fantasmic: 9 pm
+World of Ani: 9 pm",,,,Luminous: 9 pm,,"Disney Starlight: 
+9 or 11 pm",,`;
 
-            firebase.firestore().onSnapshot(docRef, (docSnap) => { // Use firebase.firestore().onSnapshot()
-                if (docSnap.exists()) {
-                    tripData = docSnap.data(); // Update global tripData
-                    // Ensure sectionOrder exists, if not, initialize it
-                    if (!tripData.sectionOrder) {
-                        tripData.sectionOrder = initialTripData.sectionOrder;
-                    }
-                    console.log("Data fetched successfully:", tripData); // Log successful data fetch
-                } else {
-                    console.log("Document does not exist, setting initial data.");
-                    // Only attempt to set initial data if userId is valid (i.e., not "NOT_CONFIGURED")
-                    if (userId !== "NOT_CONFIGURED") {
-                        firebase.firestore().setDoc(docRef, initialTripData) // Use firebase.firestore().setDoc()
-                            .then(() => console.log("Initial data set successfully."))
-                            .catch(e => console.error("Error setting initial doc:", e));
-                    }
-                    tripData = initialTripData; // Always load initial data for display
+        function parseCSV(csv) {
+            const lines = csv.split('\n').map(line => line.trim());
+            const parsedItinerary = {};
+            const parsedTripOverview = {};
+
+            // Helper to get cell value, handling empty strings and quoted commas
+            const getCellValue = (rowIdx, col) => {
+                const row = lines[rowIdx];
+                if (!row) return '';
+                // This regex handles commas inside double quotes
+                const cells = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
+                return cells[col] || '';
+            };
+
+            // Parse general trip information (rows 1-7)
+            const arrivalFlightRow = lines[1].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
+            parsedTripOverview.arrivalFlight = {
+                date: arrivalFlightRow[2],
+                number: arrivalFlightRow[3],
+                time: arrivalFlightRow[4]
+            };
+
+            const departureFlightRow = lines[2].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
+            parsedTripOverview.departureFlight = {
+                date: departureFlightRow[2],
+                number: departureFlightRow[3],
+                time: departureFlightRow[4]
+            };
+
+            parsedTripOverview.hotels = [];
+            for (let i = 3; i <= 5; i++) {
+                const hotelRow = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
+                if (hotelRow[1]) {
+                    parsedTripOverview.hotels.push({
+                        name: hotelRow[1],
+                        confirmation: hotelRow[2],
+                        dates: hotelRow[3]
+                    });
                 }
-                renderApp(); // Re-render the entire app when data changes
-                showContent(); // Show main content
-            }, (e) => {
-                console.error("Error fetching trip data:", e);
-                showError(`Failed to load trip data: ${e.message}. Please check your Firebase Firestore Security Rules.`); // More specific error message
+            }
+
+            const carServiceRow = lines[6].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
+            parsedTripOverview.carService = carServiceRow[1] || 'N/A';
+
+            const strollerRentalRow = lines[7].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
+            parsedTripOverview.strollerRental = strollerRentalRow[1] || 'N/A';
+
+
+            // Row indices for daily itinerary
+            const DAY_ROW_IDX = 8;
+            const PARK_LOCATION_ROW_IDX = 9;
+            const PARK_HOURS_ROW_IDX = 10;
+            const LIGHTNING_LANE_MULTIPASS_ROW_IDX = 12;
+            const TIER1_ROW_IDX = 13;
+            const TIER2_ROW_IDX_1 = 14;
+            const TIER2_ROW_IDX_2 = 15;
+            const INDIVIDUAL_LL_ROW_IDX = 16;
+            const ROPE_DROP_ROW_IDX = 18;
+            const SNACKS_HEADER_ROW_IDX = 20;
+            const LUNCH_DINNER_HEADER_ROW_IDX = 25;
+            const EVENING_SHOW_ROW_IDX = 32;
+
+            const dayHeaders = lines[DAY_ROW_IDX].split(',').map(h => h.trim());
+
+            const dayColumns = [];
+            for (let i = 0; i < dayHeaders.length; i++) {
+                if (dayHeaders[i].match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    dayColumns.push({ date: dayHeaders[i], index: i });
+                }
+            }
+
+            dayColumns.forEach(dayCol => {
+                const date = dayCol.date;
+                const colIdx = dayCol.index;
+
+                const getListItems = (startIdx, endIdx, col) => {
+                    const items = [];
+                    for (let i = startIdx; i <= endIdx; i++) {
+                        const item = getCellValue(i, col);
+                        if (item && item !== 'Snacks' && item !== 'Lunch/Dinner' && item !== 'Must-Do' && item !== 'Top 3 Priorities') {
+                            items.push(item);
+                        }
+                    }
+                    return items.filter(item => item !== '');
+                };
+
+                const location = getCellValue(PARK_LOCATION_ROW_IDX, colIdx);
+                const parkHours = getCellValue(PARK_HOURS_ROW_IDX, colIdx);
+                const lightningLaneMultipass = getCellValue(LIGHTNING_LANE_MULTIPASS_ROW_IDX, colIdx);
+                const tier1 = getCellValue(TIER1_ROW_IDX, colIdx);
+                const tier2_1 = getCellValue(TIER2_ROW_IDX_1, colIdx);
+                const tier2_2 = getCellValue(TIER2_ROW_IDX_2, colIdx);
+                const individualLL = getCellValue(INDIVIDUAL_LL_ROW_IDX, colIdx);
+                const ropeDrop = getCellValue(ROPE_DROP_ROW_IDX, colIdx);
+                const eveningShow = getCellValue(EVENING_SHOW_ROW_IDX, colIdx);
+
+                let snacksContentEndIdx = LUNCH_DINNER_HEADER_ROW_IDX - 1;
+                let lunchDinnerContentEndIdx = EVENING_SHOW_ROW_IDX - 1;
+
+                const snackHeaderLaterIdx = lines.findIndex((line, idx) => idx > LUNCH_DINNER_HEADER_ROW_IDX && line.startsWith('Snack,'));
+                if (snackHeaderLaterIdx !== -1) {
+                    lunchDinnerContentEndIdx = snackHeaderLaterIdx - 1;
+                    snacksContentEndIdx = EVENING_SHOW_ROW_IDX - 1;
+                }
+
+                const snacks = getListItems(SNACKS_HEADER_ROW_IDX + 1, snacksContentEndIdx, colIdx);
+                const lunchDinner = getListItems(LUNCH_DINNER_HEADER_ROW_IDX + 1, lunchDinnerContentEndIdx, colIdx);
+
+                parsedItinerary[date] = {
+                    date: date,
+                    location: location,
+                    parkHours: parkHours,
+                    lightningLaneMultipass: lightningLaneMultipass,
+                    lightningLaneTiers: {
+                        tier1: tier1,
+                        tier2: [tier2_1, tier2_2].filter(Boolean).join('; ')
+                    },
+                    individualLightningLanes: individualLL,
+                    ropeDrop: ropeDrop,
+                    food: {
+                        snacks: snacks,
+                        lunchDinner: lunchDinner
+                    },
+                    eveningShow: eveningShow
+                };
             });
+
+            return { itinerary: parsedItinerary, tripOverview: parsedTripOverview };
         }
 
-        // Updates trip data in Firestore
-        async function updateTripData(newData) {
-            // Prevent saving if Firebase is not configured
-            if (!db || !userId || userId === "NOT_CONFIGURED") {
-                console.warn("Cannot save data: Firebase is not configured.");
-                // Optionally, show a temporary message to the user that saving is not possible
+        // Function to save a specific part of the itinerary to Firestore
+        window.saveDataToFirestore = window.debounceSave(async (dataType, dataKey, dataToSave) => {
+            if (!window.userId || !window.db) {
+                console.error("Firebase not initialized or user not authenticated. Cannot save data.");
+                updateStatus("Error: Not authenticated. Cannot save.", true);
                 return;
             }
 
-            const docPath = `artifacts/${appId}/users/${userId}/disneyTrip/myTripDoc`;
-            const docRef = firebase.firestore().doc(db, docPath); // Use firebase.firestore().doc()
-            console.log("Attempting to save data to Firestore path:", docPath); // Log the path
+            const docRef = doc(window.db, `artifacts/${__app_id}/users/${window.userId}/itineraryData`, dataKey);
+            try {
+                updateStatus("Saving...", false);
+                await setDoc(docRef, dataToSave, { merge: true }); // Use merge to avoid overwriting the entire document
+                updateStatus("Saved!", false);
+                console.log(`Document ${dataKey} (${dataType}) successfully saved!`);
+            } catch (e) {
+                console.error(`Error saving document ${dataKey} (${dataType}): `, e);
+                updateStatus(`Error saving: ${e.message}`, true);
+            }
+        });
+
+        // Function to load all itinerary data from Firestore
+        async function loadItineraryFromFirestore() {
+            if (!window.userId || !window.db) {
+                console.error("Firebase not initialized or user not authenticated. Cannot load data.");
+                return;
+            }
+
+            const itineraryCollectionRef = collection(window.db, `artifacts/${__app_id}/users/${window.userId}/itineraryData`);
 
             try {
-                await firebase.firestore().setDoc(docRef, newData); // Use firebase.firestore().setDoc()
-                console.log("Data saved successfully."); // Log successful save
-                // onSnapshot listener will automatically update `tripData` and trigger `renderApp()`
-            } catch (e) {
-                console.error("Error updating trip data:", e);
-                showError(`Failed to save changes: ${e.message}. Please check your Firebase Firestore Security Rules.`); // More specific error message
-            }
-        }
-
-        // --- Editing Logic ---
-        /**
-         * Starts editing mode for a field, replacing the span with an input.
-         * Uses data attributes to identify the field.
-         * @param {HTMLElement} element - The span element that was clicked.
-         */
-        function startEditing(element) {
-            // If another field is being edited, cancel that edit first
-            if (editingField.element && editingField.element !== element) {
-                cancelEditing();
-            }
-
-            const section = element.dataset.section;
-            const row = element.dataset.row ? parseInt(element.dataset.row) : null;
-            const column = element.dataset.column;
-            const originalValue = element.textContent;
-
-            // Store current editing context
-            editingField = { element, section, row, column, originalValue };
-
-            // Create input field
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'edit-input';
-            input.value = originalValue;
-
-            // Create a container for input and buttons
-            const controlsDiv = document.createElement('div');
-            controlsDiv.className = 'edit-controls';
-            controlsDiv.appendChild(input);
-
-            // Replace the original static text element with the editing controls
-            element.replaceWith(controlsDiv);
-            input.focus(); // Focus on the input field
-
-            // Auto-save on blur, but with a slight delay to allow button clicks to register first
-            input.onblur = () => {
-                setTimeout(() => {
-                    // Check if the focus is NOT on the save or cancel button
-                    if (document.activeElement !== saveButton && document.activeElement !== cancelButton) { // saveButton and cancelButton are not used now, but keeping the check for robustness
-                        const newValue = input.value;
-                        saveEdit(section, row, column, newValue); // Auto-save
-                        cancelEditing(); // Exit editing mode
+                // Listen for changes to trip overview
+                onSnapshot(doc(itineraryCollectionRef, "tripOverview"), (docSnap) => {
+                    if (docSnap.exists()) {
+                        window.tripOverview = docSnap.data();
+                        console.log("Trip Overview loaded from Firestore:", window.tripOverview);
+                        populateTripOverview(window.tripOverview);
+                        updateStatus("Itinerary loaded.");
+                    } else {
+                        console.log("No trip overview found in Firestore. Using initial CSV data.");
+                        const { itinerary: csvItinerary, tripOverview: csvTripOverview } = parseCSV(csvData);
+                        window.tripOverview = csvTripOverview;
+                        populateTripOverview(window.tripOverview);
+                        // Save initial CSV data to Firestore if not present
+                        window.saveDataToFirestore('tripOverview', 'tripOverview', window.tripOverview);
                     }
-                }, 100); // Small delay
-            };
+                }, (error) => {
+                    console.error("Error listening to trip overview:", error);
+                    updateStatus(`Error loading trip overview: ${error.message}`, true);
+                });
 
-            // Allow pressing Enter to save
-            input.onkeydown = (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault(); // Prevent new line in input
-                    input.blur(); // Trigger blur to save
+                // Listen for changes to daily itineraries
+                onSnapshot(itineraryCollectionRef, (snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        const docId = change.doc.id;
+                        if (docId === "tripOverview") return; // Skip trip overview here
+
+                        if (change.type === "added" || change.type === "modified") {
+                            window.itineraryData[docId] = change.doc.data();
+                            console.log(`Daily itinerary for ${docId} loaded/updated.`);
+                            // If the current tab is the one being updated, re-display it
+                            if (window.activeDayTab && window.activeDayTab.dataset.date === docId) {
+                                displayDayDetails(docId);
+                            }
+                        } else if (change.type === "removed") {
+                            delete window.itineraryData[docId];
+                            console.log(`Daily itinerary for ${docId} removed.`);
+                            // If the removed tab was active, clear details
+                            if (window.activeDayTab && window.activeDayTab.dataset.date === docId) {
+                                displayDayDetails(null); // Clear content
+                            }
+                        }
+                    });
+
+                    // Re-render tabs if new dates are added or removed
+                    renderDayTabs();
+
+                    // If no tab is active, or the active tab was removed, activate the first one
+                    if (!window.activeDayTab || !window.itineraryData[window.activeDayTab.dataset.date]) {
+                        const sortedDates = Object.keys(window.itineraryData).sort();
+                        if (sortedDates.length > 0) {
+                            const firstTabHeader = document.querySelector(`.tab-header[data-date="${sortedDates[0]}"]`);
+                            if (firstTabHeader) {
+                                firstTabHeader.click();
+                            }
+                        } else {
+                            displayDayDetails(null); // Clear if no data
+                        }
+                    }
+                    updateStatus("Itinerary loaded.");
+
+                }, (error) => {
+                    console.error("Error listening to daily itineraries:", error);
+                    updateStatus(`Error loading daily itineraries: ${error.message}`, true);
+                });
+
+                // Initial load: if no data in Firestore, populate from CSV and save
+                const initialDocs = await getDocs(itineraryCollectionRef);
+                if (initialDocs.empty) {
+                    console.log("No data in Firestore. Populating from CSV and saving.");
+                    const { itinerary: csvItinerary, tripOverview: csvTripOverview } = parseCSV(csvData);
+                    window.tripOverview = csvTripOverview;
+                    window.itineraryData = csvItinerary;
+
+                    // Save trip overview
+                    window.saveDataToFirestore('tripOverview', 'tripOverview', window.tripOverview);
+
+                    // Save each daily itinerary
+                    for (const date in window.itineraryData) {
+                        window.saveDataToFirestore('dailyItinerary', date, window.itineraryData[date]);
+                    }
+                    populateTripOverview(window.tripOverview);
+                    renderDayTabs();
+                    const sortedDates = Object.keys(window.itineraryData).sort();
+                    if (sortedDates.length > 0) {
+                        const firstTabHeader = document.querySelector(`.tab-header[data-date="${sortedDates[0]}"]`);
+                        if (firstTabHeader) {
+                            firstTabHeader.click();
+                        }
+                    }
                 }
-            };
+            } catch (error) {
+                console.error("Error loading itinerary from Firestore:", error);
+                updateStatus(`Error loading itinerary: ${error.message}`, true);
+            }
         }
 
-        /**
-         * Saves the edited value back into the global tripData object and then to Firestore.
-         * @param {string} section - The data section.
-         * @param {number|null} row - The data row index.
-         * @param {string|null} column - The data column/field.
-         * @param {string} newValue - The new value from the input field.
-         */
-        async function saveEdit(section, row, column, newValue) {
-            // Only save if the value has actually changed
-            if (newValue === editingField.originalValue) {
+        // Function to populate trip overview details
+        function populateTripOverview(data) {
+            if (flightArrivalInfo) { // Ensure element exists
+                if (data.arrivalFlight) {
+                    flightArrivalInfo.textContent = `${data.arrivalFlight.number || 'N/A'} on ${data.arrivalFlight.date || 'N/A'} at ${data.arrivalFlight.time || 'N/A'}`;
+                } else {
+                    flightArrivalInfo.textContent = 'N/A';
+                }
+            }
+
+            if (flightDepartureInfo) { // Ensure element exists
+                if (data.departureFlight) {
+                    flightDepartureInfo.textContent = `${data.departureFlight.number || 'N/A'} on ${data.departureFlight.date || 'N/A'} at ${data.departureFlight.time || 'N/A'}`;
+                } else {
+                    flightDepartureInfo.textContent = 'N/A';
+                }
+            }
+
+            if (hotelInfoList) { // Ensure element exists
+                hotelInfoList.innerHTML = ''; // Clear existing
+                if (data.hotels && data.hotels.length > 0) {
+                    data.hotels.forEach((hotel, index) => {
+                        const li = document.createElement('li');
+                        li.classList.add('list-item');
+                        li.innerHTML = `<span class="font-semibold" contenteditable="true" data-field="hotel-name" data-index="${index}">${hotel.name || 'N/A'}</span> (<span contenteditable="true" data-field="hotel-dates" data-index="${index}">${hotel.dates || 'N/A'}</span>) - Confirmation: <span contenteditable="true" data-field="hotel-confirmation" data-index="${index}">${hotel.confirmation || 'N/A'}</span>`;
+                        hotelInfoList.appendChild(li);
+                    });
+                } else {
+                    hotelInfoList.innerHTML = '<li class="list-item italic text-gray-500">No hotel information available.</li>';
+                }
+            }
+
+            if (carServiceInfo) { // Ensure element exists
+                carServiceInfo.textContent = data.carService || 'N/A';
+            }
+            if (strollerRentalInfo) { // Ensure element exists
+                strollerRentalInfo.textContent = data.strollerRental || 'N/A';
+            }
+
+            // Add event listeners for trip overview editable fields
+            document.querySelectorAll('#flight-arrival-info, #flight-departure-info, #car-service-info, #stroller-rental-info, #hotel-info [contenteditable="true"]').forEach(el => {
+                el.onblur = (event) => {
+                    const field = event.target.dataset.field;
+                    const index = event.target.dataset.index;
+                    let value = event.target.textContent.trim();
+
+                    if (field === 'flight-arrival-info') {
+                        // Attempt to parse "UA2451 on 2025-07-23 at 18:25:00"
+                        const parts = value.match(/(.+) on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2}:\d{2})/);
+                        if (parts) {
+                            window.tripOverview.arrivalFlight = { number: parts[1], date: parts[2], time: parts[3] };
+                        } else {
+                            // Fallback if format is unexpected
+                            window.tripOverview.arrivalFlight = { number: value, date: '', time: '' };
+                        }
+                    } else if (field === 'flight-departure-info') {
+                        const parts = value.match(/(.+) on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2}:\d{2})/);
+                        if (parts) {
+                            window.tripOverview.departureFlight = { number: parts[1], date: parts[2], time: parts[3] };
+                        } else {
+                            window.tripOverview.departureFlight = { number: value, date: '', time: '' };
+                        }
+                    } else if (field === 'car-service-info') {
+                        window.tripOverview.carService = value;
+                    } else if (field === 'stroller-rental-info') {
+                        window.tripOverview.strollerRental = value;
+                    } else if (field && index !== undefined) {
+                        const hotelIndex = parseInt(index);
+                        if (!window.tripOverview.hotels[hotelIndex]) {
+                            window.tripOverview.hotels[hotelIndex] = {};
+                        }
+                        if (field === 'hotel-name') {
+                            window.tripOverview.hotels[hotelIndex].name = value;
+                        } else if (field === 'hotel-dates') {
+                            window.tripOverview.hotels[hotelIndex].dates = value;
+                        } else if (field === 'hotel-confirmation') {
+                            window.tripOverview.hotels[hotelIndex].confirmation = value;
+                        }
+                    }
+                    window.saveDataToFirestore('tripOverview', 'tripOverview', window.tripOverview);
+                };
+            });
+        }
+
+
+        // Function to display details for a selected day
+        function displayDayDetails(date) {
+            const day = window.itineraryData[date];
+            if (!day) {
+                // Clear content if no data for this date
+                if (currentDayDate) currentDayDate.textContent = 'No data for this date.';
+                if (detailLocation) detailLocation.textContent = '';
+                if (detailParkHours) detailParkHours.textContent = '';
+                if (detailLLTier1) detailLLTier1.innerHTML = '';
+                if (detailLLTier2) detailLLTier2.innerHTML = '';
+                if (detailILL) detailILL.textContent = '';
+                if (detailRopeDrop) detailRopeDrop.textContent = '';
+                if (detailEveningShow) detailEveningShow.textContent = '';
+                if (detailSnacks) detailSnacks.innerHTML = '<li class="list-item italic text-gray-500">No snacks planned.</li>';
+                if (detailLunchDinner) detailLunchDinner.innerHTML = '<li class="list-item italic text-gray-500">No lunch/dinner planned.</li>';
                 return;
             }
 
-            // Create a deep copy of tripData to avoid direct mutation issues with nested objects/arrays
-            let newData = JSON.parse(JSON.stringify(tripData));
+            if (currentDayDate) currentDayDate.textContent = `Itinerary for ${day.date}`;
 
-            // Logic to update the specific field based on its section, row, and column
-            if (section === 'flightDetails') {
-                newData[section][column] = newValue;
-            } else if (section === 'hotelConfirmation') {
-                newData[section][row][column] = newValue;
-            } else if (section === 'otherInfo') {
-                newData[section][column] = newValue;
-            } else if (section === 'generalParkHours') {
-                const [parkKey, timeKey] = column.split('.');
-                if (newData[section][parkKey]) {
-                    newData[section][parkKey][timeKey] = newValue;
+            // Populate and make editable
+            if (detailLocation) {
+                detailLocation.textContent = day.location || '';
+                detailLocation.setAttribute('contenteditable', 'true');
+                detailLocation.onblur = (e) => {
+                    day.location = e.target.textContent.trim();
+                    window.saveDataToFirestore('dailyItinerary', date, day);
+                };
+            }
+
+            if (detailParkHours) {
+                detailParkHours.textContent = day.parkHours || '';
+                detailParkHours.setAttribute('contenteditable', 'true');
+                detailParkHours.onblur = (e) => {
+                    day.parkHours = e.target.textContent.trim();
+                    window.saveDataToFirestore('dailyItinerary', date, day);
+                };
+            }
+
+            if (detailLLTier1) {
+                detailLLTier1.innerHTML = `<span class="font-semibold">Tier 1:</span> <span contenteditable="true" data-field="tier1">${day.lightningLaneTiers.tier1 || ''}</span>`;
+                detailLLTier1.querySelector('[data-field="tier1"]').onblur = (e) => {
+                    day.lightningLaneTiers.tier1 = e.target.textContent.trim();
+                    window.saveDataToFirestore('dailyItinerary', date, day);
+                };
+            }
+
+            if (detailLLTier2) {
+                detailLLTier2.innerHTML = `<span class="font-semibold">Tier 2:</span> <span contenteditable="true" data-field="tier2">${day.lightningLaneTiers.tier2 || ''}</span>`;
+                detailLLTier2.querySelector('[data-field="tier2"]').onblur = (e) => {
+                    day.lightningLaneTiers.tier2 = e.target.textContent.trim();
+                    window.saveDataToFirestore('dailyItinerary', date, day);
+                };
+            }
+
+            if (detailILL) {
+                detailILL.textContent = day.individualLightningLanes || '';
+                detailILL.setAttribute('contenteditable', 'true');
+                detailILL.onblur = (e) => {
+                    day.individualLightningLanes = e.target.textContent.trim();
+                    window.saveDataToFirestore('dailyItinerary', date, day);
+                };
+            }
+
+            if (detailRopeDrop) {
+                detailRopeDrop.textContent = day.ropeDrop || '';
+                detailRopeDrop.setAttribute('contenteditable', 'true');
+                detailRopeDrop.onblur = (e) => {
+                    day.ropeDrop = e.target.textContent.trim();
+                    window.saveDataToFirestore('dailyItinerary', date, day);
+                };
+            }
+
+            if (detailEveningShow) {
+                detailEveningShow.textContent = day.eveningShow || '';
+                detailEveningShow.setAttribute('contenteditable', 'true');
+                detailEveningShow.onblur = (e) => {
+                    day.eveningShow = e.target.textContent.trim();
+                    window.saveDataToFirestore('dailyItinerary', date, day);
+                };
+            }
+
+            displayFoodLists(date); // Call this to handle snacks and meals
+        }
+
+        // Helper to re-render just the food lists after an edit to handle empty items
+        function displayFoodLists(date) {
+            const day = window.itineraryData[date];
+            if (!day) return;
+
+            if (detailSnacks) {
+                detailSnacks.innerHTML = '';
+                if (day.food.snacks && day.food.snacks.length > 0) {
+                    day.food.snacks.forEach((snack, index) => {
+                        const li = document.createElement('li');
+                        li.classList.add('list-item');
+                        const span = document.createElement('span');
+                        span.textContent = snack;
+                        span.setAttribute('contenteditable', 'true');
+                        span.dataset.field = 'snack';
+                        span.dataset.index = index;
+                        li.appendChild(span);
+                        detailSnacks.appendChild(li);
+                    });
                 }
-            } else if (section === 'dailyPlans') {
-                const currentDayPlan = newData.dailyPlans[row]; // 'row' is dayIndex here
-                const parts = column.split('-');
-                const category = parts[0];
+                // Always add an empty editable item for adding new entries
+                const newSnackLi = document.createElement('li');
+                newSnackLi.classList.add('list-item');
+                const newSnackSpan = document.createElement('span');
+                newSnackSpan.textContent = '';
+                newSnackSpan.setAttribute('contenteditable', 'true');
+                newSnackSpan.dataset.field = 'snack';
+                newSnackSpan.dataset.index = (day.food.snacks ? day.food.snacks.length : 0).toString();
+                newSnackLi.appendChild(newSnackSpan);
+                detailSnacks.appendChild(newSnackLi);
 
-                if (parts.length === 1) { // Direct properties like 'park', 'parkHours', 'eveningShow'
-                    currentDayPlan[category] = newValue;
-                } else if (parts.length === 3) { // Nested array items like 'snacks-0-item'
-                    const itemIndex = parseInt(parts[1]);
-                    const field = parts[2];
-                    if (currentDayPlan[category] && Array.isArray(currentDayPlan[category]) && currentDayPlan[category][itemIndex]) {
-                        currentDayPlan[category][itemIndex][field] = newValue;
-                    }
+                // Re-attach blur listeners for snacks
+                detailSnacks.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                    el.onblur = (e) => {
+                        const index = parseInt(e.target.dataset.index);
+                        const value = e.target.textContent.trim();
+                        if (!day.food.snacks) day.food.snacks = [];
+
+                        if (value === '' && day.food.snacks[index] !== undefined) {
+                            // If an existing item is cleared, remove it
+                            day.food.snacks.splice(index, 1);
+                        } else if (value !== '' && day.food.snacks[index] === undefined) {
+                            // If a new item is added to an empty slot
+                            day.food.snacks.push(value);
+                        } else if (value !== '') {
+                            // If an existing item is modified
+                            day.food.snacks[index] = value;
+                        }
+                        day.food.snacks = day.food.snacks.filter(item => item !== ''); // Final cleanup
+                        window.saveDataToFirestore('dailyItinerary', date, day);
+                        displayFoodLists(date); // Re-render to update indices and add new empty input
+                    };
+                });
+            }
+
+
+            if (detailLunchDinner) {
+                detailLunchDinner.innerHTML = '';
+                if (day.food.lunchDinner && day.food.lunchDinner.length > 0) {
+                    day.food.lunchDinner.forEach((meal, index) => {
+                        const li = document.createElement('li');
+                        li.classList.add('list-item');
+                        const span = document.createElement('span');
+                        span.textContent = meal;
+                        span.setAttribute('contenteditable', 'true');
+                        span.dataset.field = 'meal';
+                        span.dataset.index = index;
+                        li.appendChild(span);
+                        detailLunchDinner.appendChild(li);
+                    });
                 }
-            } else if (section === 'individualLightningLane' || section === 'ropeDrop') {
-                newData[section][row] = newValue;
-            }
+                // Always add an empty editable item for adding new entries
+                const newMealLi = document.createElement('li');
+                newMealLi.classList.add('list-item');
+                const newMealSpan = document.createElement('span');
+                newMealSpan.textContent = '';
+                newMealSpan.setAttribute('contenteditable', 'true');
+                newMealSpan.dataset.field = 'meal';
+                newMealSpan.dataset.index = (day.food.lunchDinner ? day.food.lunchDinner.length : 0).toString();
+                newMealLi.appendChild(newMealSpan);
+                detailLunchDinner.appendChild(newMealLi);
 
-            await updateTripData(newData); // Send updated data to Firestore
-        }
+                // Re-attach blur listeners for lunch/dinner
+                detailLunchDinner.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                    el.onblur = (e) => {
+                        const index = parseInt(e.target.dataset.index);
+                        const value = e.target.textContent.trim();
+                        if (!day.food.lunchDinner) day.food.lunchDinner = [];
 
-        /**
-         * Cancels the current editing mode, reverting the field to its static display.
-         */
-        function cancelEditing() {
-            if (editingField.element) {
-                // Restore the original static element by replacing the controls div
-                const originalElement = editingField.element;
-                const controlsDiv = originalElement.parentNode;
-                const span = document.createElement('span');
-                span.className = 'editable-field';
-                span.textContent = editingField.originalValue || "N/A";
-                span.dataset.section = editingField.section;
-                if (editingField.row !== null) span.dataset.row = editingField.row;
-                if (editingField.column !== null) span.dataset.column = editingField.column;
-                controlsDiv.replaceWith(span);
-            }
-            // Reset editingField state
-            editingField = { element: null, section: null, row: null, column: null, originalValue: null };
-        }
-
-        /**
-         * Adds an empty item to the specified array section in tripData.
-         * @param {string} section - The section to add an item to (e.g., 'hotelConfirmation', 'individualLightningLane', 'snacks').
-         * @param {number|null} [dayIndex=null] - The index of the day if adding to a daily plan sub-section.
-         */
-        function addEmptyItem(section, dayIndex = null) {
-            let newData = JSON.parse(JSON.stringify(tripData)); // Deep copy
-
-            if (section === 'hotelConfirmation') {
-                newData.hotelConfirmation.push({ hotel: "", confirmation: "" });
-            } else if (section === 'individualLightningLane') {
-                newData.individualLightningLane.push("");
-            } else if (section === 'ropeDrop') {
-                newData.ropeDrop.push("");
-            } else if (dayIndex !== null && newData.dailyPlans[dayIndex]) {
-                // For daily plans sub-sections
-                if (section === 'lightningLane') {
-                    newData.dailyPlans[dayIndex].lightningLane.push({ type: "", item: "", details: "" });
-                } else if (section === 'snacks' || section === 'lunchDinner' || section === 'topPriorities') {
-                    newData.dailyPlans[dayIndex][section].push({ item: "" });
-                }
-            } else {
-                console.warn(`Attempted to add item to unknown section or invalid dayIndex: ${section}, ${dayIndex}`);
-                return;
-            }
-            updateTripData(newData); // Save the updated data
-        }
-
-        // --- Event Delegation for the entire app ---
-        function attachGlobalEventListeners() {
-            sectionsContainer.addEventListener('click', (e) => {
-                // Handle editable fields
-                if (e.target.classList.contains('editable-field')) {
-                    startEditing(e.target);
-                }
-                // Handle add buttons
-                else if (e.target.classList.contains('add-button')) {
-                    const section = e.target.dataset.section;
-                    const dayIndex = e.target.dataset.dayIndex ? parseInt(e.target.dataset.dayIndex) : null;
-                    addEmptyItem(section, dayIndex);
-                }
-                // Handle day tabs
-                else if (e.target.classList.contains('tab-button') && e.target.dataset.tabType === 'day') {
-                    const index = parseInt(e.target.dataset.index);
-                    if (activeDayTab !== index) {
-                        activeDayTab = index;
-                        activeFoodTab = 'snacks'; // Reset food tab when day changes
-                        renderDailyPlansSection(); // Re-render only the daily plans section
-                    }
-                }
-                // Handle food tabs
-                else if (e.target.classList.contains('tab-button') && e.target.dataset.tabType === 'food') {
-                    const category = e.target.dataset.category;
-                    if (activeFoodTab !== category) {
-                        activeFoodTab = category;
-                        renderActiveDayPlanContent(); // Re-render only the active day's content
-                    }
-                }
-            });
-
-            // Drag and Drop listeners (these are already delegated to sectionsContainer)
-            attachDragAndDropListeners();
-        }
-
-
-        // --- HTML String Generation Functions ---
-
-        /**
-         * Generates the HTML string for a single editable field.
-         * @param {string} section - The top-level section of the data.
-         * @param {number|null} row - The index of the item in an array (if applicable).
-         * @param {string|null} column - The specific key/field to edit.
-         * @param {string} value - The current text value to display.
-         * @returns {string} HTML string for the editable span.
-         */
-        function getEditableHtml(section, row, column, value) {
-            // Use data-attributes to store the context for event delegation
-            return `<span class="editable-field" data-section="${section}" ${row !== null ? `data-row="${row}"` : ''} ${column !== null ? `data-column="${column}"` : ''}>${value || "N/A"}</span>`;
-        }
-
-        function createFlightDetailsHtml(sectionKey) {
-            const flightsHtml = Object.entries(tripData.flightDetails).map(([key, flight], index) => `
-                <div class="mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
-                    <p><span class="data-label">Flight ${index + 1} #:</span> ${getEditableHtml('flightDetails', null, `${key}.flightNum`, flight.flightNum)}</p>
-                    <p><span class="data-label">Departure Date:</span> ${getEditableHtml('flightDetails', null, `${key}.departureDate`, flight.departureDate)}</p>
-                    <p><span class="data-label">Arrival Date:</span> ${getEditableHtml('flightDetails', null, `${key}.arrivalDate`, flight.arrivalDate)}</p>
-                    <p><span class="data-label">Departure Time:</span> ${getEditableHtml('flightDetails', null, `${key}.departureTime`, flight.departureTime)}</p>
-                    <p><span class="data-label">Arrival Time:</span> ${getEditableHtml('flightDetails', null, `${key}.arrivalTime`, flight.arrivalTime)}</p>
-                </div>
-            `).join('');
-
-            return `
-                <h2 class="section-title">Flight Details</h2>
-                <div id="flight-details-content-${sectionKey}">${flightsHtml}</div>
-            `;
-        }
-
-        function createHotelConfirmationHtml(sectionKey) {
-            const rowsHtml = tripData.hotelConfirmation.map((hotel, index) => `
-                <tr class="table-row border-b border-gray-200">
-                    <td class="py-2 px-4">${getEditableHtml('hotelConfirmation', index, 'hotel', hotel.hotel)}</td>
-                    <td class="py-2 px-4">${getEditableHtml('hotelConfirmation', index, 'confirmation', hotel.confirmation)}</td>
-                </tr>
-            `).join('');
-
-            return `
-                <h2 class="section-title">Hotel Confirmation</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white rounded-lg shadow-sm">
-                        <thead>
-                            <tr class="table-header">
-                                <th class="py-2 px-4 text-left">Hotel</th>
-                                <th class="py-2 px-4 text-left">Confirmation</th>
-                            </tr>
-                        </thead>
-                        <tbody id="hotel-confirmation-content-${sectionKey}">${rowsHtml}</tbody>
-                    </table>
-                </div>
-                <button class="add-button mt-4" data-section="hotelConfirmation">Add Hotel</button>
-            `;
-        }
-
-        function createOtherInformationHtml(sectionKey) {
-            return `
-                <h2 class="section-title">Other Information</h2>
-                <div id="other-info-content-${sectionKey}">
-                    <p><span class="data-label">Car Service:</span> ${getEditableHtml('otherInfo', null, 'carService', tripData.otherInfo.carService)}</p>
-                    <p><span class="data-label">Stroller Rental:</span> ${getEditableHtml('otherInfo', null, 'strollerRental', tripData.otherInfo.strollerRental)}</p>
-                </div>
-            `;
-        }
-
-        function createGeneralParkHoursHtml(sectionKey) {
-            const rowsHtml = Object.entries(tripData.generalParkHours).map(([parkName, hours]) => `
-                <tr class="table-row border-b border-gray-200">
-                    <td class="py-2 px-4 capitalize">${parkName.replace(/([A-Z])/g, ' $1').trim()}</td>
-                    <td class="py-2 px-4">${getEditableHtml('generalParkHours', null, `${parkName}.open`, hours.open)}</td>
-                    <td class="py-2 px-4">${getEditableHtml('generalParkHours', null, `${parkName}.close`, hours.close)}</td>
-                </tr>
-            `).join('');
-
-            return `
-                <h2 class="section-title">General Park Hours</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white rounded-lg shadow-sm">
-                        <thead>
-                            <tr class="table-header">
-                                <th class="py-2 px-4 text-left">Park</th>
-                                <th class="py-2 px-4 text-left">Open</th>
-                                <th class="py-2 px-4 text-left">Close</th>
-                            </tr>
-                        </thead>
-                        <tbody id="general-park-hours-content-${sectionKey}">${rowsHtml}</tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        function createDailyPlansHtml(sectionKey) {
-            const dayTabsHtml = tripData.dailyPlans.map((dayPlan, index) => `
-                <button class="tab-button ${activeDayTab === index ? 'tab-button-active' : 'tab-button-inactive'}" data-tab-type="day" data-index="${index}">
-                    ${dayPlan.day}
-                </button>
-            `).join('');
-
-            const activeDayPlan = tripData.dailyPlans[activeDayTab];
-            const lightningLaneItemsHtml = activeDayPlan.lightningLane.map((item, itemIndex) => `
-                <li>
-                    ${getEditableHtml('dailyPlans', activeDayTab, `lightningLane-${itemIndex}-item`, item.item)}
-                    ${item.type ? ` (${getEditableHtml('dailyPlans', activeDayTab, `lightningLane-${itemIndex}-type`, item.type)})` : ''}
-                    ${item.details ? `: ${getEditableHtml('dailyPlans', activeDayTab, `lightningLane-${itemIndex}-details`, item.details)}` : ''}
-                </li>
-            `).join('');
-
-            const foodCategories = [
-                { key: 'snacks', label: 'Snacks' },
-                { key: 'lunchDinner', label: 'Lunch/Dinner' },
-                { key: 'topPriorities', label: 'Top Priorities (Food/Activities)' }
-            ];
-
-            const foodTabsHtml = foodCategories.map(category => `
-                <button class="tab-button ${activeFoodTab === category.key ? 'tab-button-active' : 'tab-button-inactive'}" data-tab-type="food" data-category="${category.key}">
-                    ${category.label}
-                </button>
-            `).join('');
-
-            const currentFoodItems = activeDayPlan[activeFoodTab];
-            const foodItemsListHtml = currentFoodItems && currentFoodItems.length > 0
-                ? currentFoodItems.map((item, itemIndex) => `
-                    <li>${getEditableHtml('dailyPlans', activeDayTab, `${activeFoodTab}-${itemIndex}-item`, item.item)}</li>
-                `).join('')
-                : `<p class="text-gray-600 mt-3">No ${foodCategories.find(c => c.key === activeFoodTab).label.toLowerCase()} planned for this day.</p>`;
-
-            return `
-                <h2 class="section-title">Daily Plans</h2>
-                <div id="day-tabs-${sectionKey}" class="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-2 -mx-2 px-2">${dayTabsHtml}</div>
-                <div id="daily-plan-content-${sectionKey}" class="mb-6 p-4 border border-blue-200 rounded-lg bg-blue-50">
-                    <h3 class="text-lg font-semibold text-blue-800 mb-2">${activeDayPlan.day}</h3>
-                    <p><span class="data-label">Park:</span> ${getEditableHtml('dailyPlans', activeDayTab, 'park', activeDayPlan.park)}</p>
-                    <p><span class="data-label">Park Hours:</span> ${getEditableHtml('dailyPlans', activeDayTab, 'parkHours', activeDayPlan.parkHours)}</p>
-
-                    <div class="mt-3">
-                        <p class="data-label mb-1">Lightning Lane:</p>
-                        <ul class="list-disc list-inside ml-4">${lightningLaneItemsHtml}</ul>
-                        <button class="add-button mt-4" data-section="lightningLane" data-day-index="${activeDayTab}">Add Lightning Lane</button>
-                    </div>
-
-                    ${activeDayPlan.eveningShow ? `<p class="mt-3"><span class="data-label">Evening Show:</span> ${getEditableHtml('dailyPlans', activeDayTab, 'eveningShow', activeDayPlan.eveningShow)}</p>` : ''}
-
-                    <div class="flex flex-wrap gap-2 mt-4 mb-3">${foodTabsHtml}</div>
-                    <div class="mt-3">
-                        <p class="data-label mb-1">${foodCategories.find(c => c.key === activeFoodTab).label}:</p>
-                        <ul class="list-disc list-inside ml-4">${foodItemsListHtml}</ul>
-                        <button class="add-button mt-4" data-section="${activeFoodTab}" data-day-index="${activeDayTab}">Add ${foodCategories.find(c => c.key === activeFoodTab).label.replace(' (Food/Activities)', '')}</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function createIndividualLightningLaneHtml(sectionKey) {
-            const itemsHtml = tripData.individualLightningLane.map((item, index) => `
-                <li>${getEditableHtml('individualLightningLane', index, null, item)}</li>
-            `).join('');
-
-            return `
-                <h2 class="section-title">Individual Lightning Lane</h2>
-                <ul id="individual-lightning-lane-content-${sectionKey}" class="list-disc list-inside">${itemsHtml}</ul>
-                <button class="add-button mt-4" data-section="individualLightningLane">Add Item</button>
-            `;
-        }
-
-        function createRopeDropHtml(sectionKey) {
-            const itemsHtml = tripData.ropeDrop.map((item, index) => `
-                <li>${getEditableHtml('ropeDrop', index, null, item)}</li>
-            `).join('');
-
-            return `
-                <h2 class="section-title">Rope Drop</h2>
-                <ul id="rope-drop-content-${sectionKey}" class="list-disc list-inside">${itemsHtml}</ul>
-                <button class="add-button mt-4" data-section="ropeDrop">Add Item</button>
-            `;
-        }
-
-        // Mapping of section keys to their HTML generation functions
-        const sectionHtmlGenerators = {
-            flightDetails: createFlightDetailsHtml,
-            hotelConfirmation: createHotelConfirmationHtml,
-            otherInfo: createOtherInformationHtml,
-            generalParkHours: createGeneralParkHoursHtml,
-            dailyPlans: createDailyPlansHtml,
-            individualLightningLane: createIndividualLightningLaneHtml,
-            ropeDrop: createRopeDropHtml
-        };
-
-        function renderApp() {
-            if (!tripData) return;
-
-            // Clear the sections container before re-rendering all sections
-            sectionsContainer.innerHTML = '';
-
-            // Iterate through the defined order of sections and dynamically create/append them
-            tripData.sectionOrder.forEach(sectionKey => {
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'card';
-                cardDiv.id = `${sectionKey}-card`; // Assign a unique ID to the card
-                cardDiv.draggable = true; // Make the card draggable
-                cardDiv.innerHTML = sectionHtmlGenerators[sectionKey](sectionKey);
-                sectionsContainer.appendChild(cardDiv);
-            });
-
-            // Attach all global event listeners after rendering
-            attachGlobalEventListeners();
-            attachDragAndDropListeners(); // Re-attach drag and drop listeners as DOM is rebuilt
-        }
-
-        // Helper function to re-render only the daily plans section (called when day tab changes)
-        function renderDailyPlansSection() {
-            const dailyPlansCard = document.getElementById('dailyPlans-card');
-            if (dailyPlansCard) {
-                dailyPlansCard.innerHTML = sectionHtmlGenerators.dailyPlans('dailyPlans');
-                attachGlobalEventListeners(); // Re-attach listeners for newly rendered content
-            }
-        }
-
-        // Helper function to re-render only the active day's content (called when food tab changes)
-        function renderActiveDayPlanContent() {
-            const dailyPlanContentContainer = document.getElementById('daily-plan-content-dailyPlans');
-            if (dailyPlanContentContainer) {
-                const activeDayPlan = tripData.dailyPlans[activeDayTab];
-                const foodCategories = [
-                    { key: 'snacks', label: 'Snacks' },
-                    { key: 'lunchDinner', label: 'Lunch/Dinner' },
-                    { key: 'topPriorities', label: 'Top Priorities (Food/Activities)' }
-                ];
-
-                const foodTabsHtml = foodCategories.map(category => `
-                    <button class="tab-button ${activeFoodTab === category.key ? 'tab-button-active' : 'tab-button-inactive'}" data-tab-type="food" data-category="${category.key}">
-                        ${category.label}
-                    </button>
-                `).join('');
-
-                const currentFoodItems = activeDayPlan[activeFoodTab];
-                const foodItemsListHtml = currentFoodItems && currentFoodItems.length > 0
-                    ? currentFoodItems.map((item, itemIndex) => `
-                        <li>${getEditableHtml('dailyPlans', activeDayTab, `${activeFoodTab}-${itemIndex}-item`, item.item)}</li>
-                    `).join('')
-                    : `<p class="text-gray-600 mt-3">No ${foodCategories.find(c => c.key === activeFoodTab).label.toLowerCase()} planned for this day.</p>`;
-
-                // Re-render only the food content part of the daily plan
-                dailyPlanContentContainer.querySelector('.flex.flex-wrap.gap-2.mt-4.mb-3').innerHTML = foodTabsHtml; // Update food tabs
-                dailyPlanContentContainer.querySelector('.mt-3:last-of-type').innerHTML = `
-                    <p class="data-label mb-1">${foodCategories.find(c => c.key === activeFoodTab).label}:</p>
-                    <ul class="list-disc list-inside ml-4">${foodItemsListHtml}</ul>
-                    <button class="add-button mt-4" data-section="${activeFoodTab}" data-day-index="${activeDayTab}">Add ${foodCategories.find(c => c.key === activeFoodTab).label.replace(' (Food/Activities)', '')}</button>
-                `;
-                attachGlobalEventListeners(); // Re-attach listeners for newly rendered content
+                        if (value === '' && day.food.lunchDinner[index] !== undefined) {
+                            day.food.lunchDinner.splice(index, 1);
+                        } else if (value !== '' && day.food.lunchDinner[index] === undefined) {
+                            day.food.lunchDinner.push(value);
+                        } else if (value !== '') {
+                            day.food.lunchDinner[index] = value;
+                        }
+                        day.food.lunchDinner = day.food.lunchDinner.filter(item => item !== '');
+                        window.saveDataToFirestore('dailyItinerary', date, day);
+                        displayFoodLists(date);
+                    };
+                });
             }
         }
 
 
-        // --- Drag and Drop Logic (Remains largely the same, but re-attached after render) ---
-        function attachDragAndDropListeners() {
-            // Remove existing listeners to prevent duplicates if this is called multiple times
-            sectionsContainer.removeEventListener('dragstart', handleDragStart);
-            sectionsContainer.removeEventListener('dragover', handleDragOver);
-            sectionsContainer.removeEventListener('dragleave', handleDragLeave);
-            sectionsContainer.removeEventListener('drop', handleDrop);
-            sectionsContainer.removeEventListener('dragend', handleDragEnd);
+        // Function to render day tabs
+        function renderDayTabs() {
+            const sortedDates = Object.keys(window.itineraryData).sort();
+            if (dayTabsContainer) { // Ensure element exists
+                dayTabsContainer.innerHTML = ''; // Clear existing tabs
 
-            // Add listeners
-            sectionsContainer.addEventListener('dragstart', handleDragStart);
-            sectionsContainer.addEventListener('dragover', handleDragOver);
-            sectionsContainer.addEventListener('dragleave', handleDragLeave);
-            sectionsContainer.addEventListener('drop', handleDrop);
-            sectionsContainer.addEventListener('dragend', handleDragEnd);
-        }
+                sortedDates.forEach(date => {
+                    const tabHeader = document.createElement('div');
+                    tabHeader.textContent = date;
+                    tabHeader.classList.add('tab-header');
+                    tabHeader.dataset.date = date;
 
-        function handleDragStart(e) {
-            if (e.target.classList.contains('card')) {
-                draggedElement = e.target;
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', e.target.id);
-                setTimeout(() => {
-                    e.target.classList.add('opacity-50');
-                }, 0);
+                    tabHeader.addEventListener('click', () => {
+                        if (window.activeDayTab) {
+                            window.activeDayTab.classList.remove('active');
+                        }
+                        tabHeader.classList.add('active');
+                        window.activeDayTab = tabHeader;
+                        displayDayDetails(date);
+                    });
+                    dayTabsContainer.appendChild(tabHeader);
+                });
             }
         }
 
-        function handleDragOver(e) {
-            e.preventDefault();
-            if (e.target.classList.contains('card') && e.target !== draggedElement) {
-                const bounding = e.target.getBoundingClientRect();
-                const offset = bounding.y + (bounding.height / 2);
-                if (e.clientY - offset > 0) {
-                    e.target.classList.remove('drag-over-top');
-                    e.target.classList.add('drag-over-bottom');
-                } else {
-                    e.target.classList.remove('drag-over-bottom');
-                    e.target.classList.add('drag-over-top');
-                }
-            }
-        }
-
-        function handleDragLeave(e) {
-            if (e.target.classList.contains('card')) {
-                e.target.classList.remove('drag-over-top', 'drag-over-bottom');
-            }
-        }
-
-        async function handleDrop(e) {
-            e.preventDefault();
-            if (e.target.classList.contains('card') && e.target !== draggedElement) {
-                const draggedId = draggedElement.id;
-                const targetId = e.target.id;
-
-                const currentOrder = [...tripData.sectionOrder];
-                const draggedKey = draggedId.replace('-card', '');
-                const targetKey = targetId.replace('-card', '');
-
-                const draggedIndex = currentOrder.indexOf(draggedKey);
-                const targetIndex = currentOrder.indexOf(targetKey);
-
-                if (draggedIndex === -1 || targetIndex === -1) return;
-
-                const [removed] = currentOrder.splice(draggedIndex, 1);
-
-                const bounding = e.target.getBoundingClientRect();
-                const offset = bounding.y + (bounding.height / 2);
-                if (e.clientY - offset > 0) {
-                    currentOrder.splice(targetIndex + (draggedIndex < targetIndex ? 0 : 1), 0, removed);
-                } else {
-                    currentOrder.splice(targetIndex + (draggedIndex < targetIndex ? -1 : 0), 0, removed);
-                }
-
-                let newData = JSON.parse(JSON.stringify(tripData));
-                newData.sectionOrder = currentOrder;
-                await updateTripData(newData); // This will trigger renderApp via onSnapshot
-            }
-            e.target.classList.remove('drag-over-top', 'drag-over-bottom');
-        }
-
-        function handleDragEnd(e) {
-            if (draggedElement) {
-                draggedElement.classList.remove('opacity-50');
-                draggedElement = null;
-            }
-            document.querySelectorAll('.drag-over-top', '.drag-over-bottom').forEach(el => {
-                el.classList.remove('drag-over-top', 'drag-over-bottom');
-            });
-        }
-
-
-        // Initialize the app when the window loads
-        window.onload = initFirebaseAndFetchData;
+        // Initialize Firebase when the window loads
+        window.onload = initializeFirebase;
     </script>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-4 shadow-lg">
+        <div class="container flex justify-between items-center">
+            <h1 class="text-3xl font-bold">Disney World Itinerary</h1>
+            <span class="text-sm opacity-80" id="user-id-display"></span>
+        </div>
+    </header>
+
+    <main class="flex-grow container py-8">
+        <!-- Status Message -->
+        <div id="status-message" class="status-message hidden mb-4"></div>
+
+        <!-- General Trip Information Card -->
+        <div class="card mb-6">
+            <h2 class="text-2xl font-semibold text-center mb-4 text-indigo-700">Trip Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-purple-600">Flights</h3>
+                    <p><strong class="text-indigo-600">Arrival:</strong> <span id="flight-arrival-info" contenteditable="true"></span></p>
+                    <p><strong class="text-indigo-600">Departure:</strong> <span id="flight-departure-info" contenteditable="true"></span></p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-purple-600">Hotels</h3>
+                    <ul id="hotel-info" class="list-disc list-inside">
+                        <!-- Hotel details will be injected here -->
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-purple-600">Other Services</h3>
+                    <p><strong class="text-indigo-600">Car Service:</strong> <span id="car-service-info" contenteditable="true"></span></p>
+                    <p><strong class="text-indigo-600">Stroller Rental:</strong> <span id="stroller-rental-info" contenteditable="true"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-center mb-4 text-indigo-700">Daily Itinerary</h2>
+            <!-- Tab Headers -->
+            <div id="day-tabs" class="flex flex-wrap justify-center overflow-x-auto whitespace-nowrap pb-2 -mb-1">
+                <!-- Day tab headers will be injected here by JavaScript -->
+            </div>
+
+            <!-- Tab Content -->
+            <div id="itinerary-details" class="tab-content-container">
+                <h2 id="current-day-date" class="text-2xl font-bold mb-4 text-center text-purple-700"></h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="detail-item">
+                        <strong class="text-xl block mb-1">Location:</strong>
+                        <p id="detail-location" class="text-lg"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong class="text-xl block mb-1">Park Hours:</strong>
+                        <p id="detail-park-hours" class="text-lg"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong class="text-xl block mb-1">Lightning Lane Tiers:</strong>
+                        <p id="detail-ll-tier1" class="text-base mb-1"><span class="font-semibold">Tier 1:</span> </p>
+                        <p id="detail-ll-tier2" class="text-base"><span class="font-semibold">Tier 2:</span> </p>
+                    </div>
+                    <div class="detail-item">
+                        <strong class="text-xl block mb-1">Individual Lightning Lanes:</strong>
+                        <p id="detail-ill" class="text-lg"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong class="text-xl block mb-1">Rope Drop:</strong>
+                        <p id="detail-rope-drop" class="text-lg"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong class="text-xl block mb-1">Evening Show:</strong>
+                        <p id="detail-evening-show" class="text-lg"></p>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t pt-6 border-gray-200">
+                    <strong class="text-xl block mb-2 text-indigo-700">Food:</strong>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-2">Snacks:</h3>
+                            <ul id="detail-snacks" class="list-disc list-inside">
+                                <!-- Snacks will be injected here -->
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-2">Lunch/Dinner:</h3>
+                            <ul id="detail-lunch-dinner" class="list-disc list-inside">
+                                <!-- Lunch/Dinner will be injected here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white p-4 text-center text-sm mt-8">
+        <div class="container">
+            &copy; 2025 Disney World Itinerary App. All rights reserved.
+        </div>
+    </footer>
 </body>
 </html>
