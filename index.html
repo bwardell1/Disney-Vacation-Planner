@@ -68,7 +68,6 @@
         .list-item {
             margin-bottom: 0.25rem;
         }
-        /* Removed contenteditable styles as fields are no longer editable */
         .status-message {
             text-align: center;
             margin-top: 1rem;
@@ -129,7 +128,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Config provided by the user for GitHub hosting
         const firebaseConfig = {
@@ -153,9 +152,9 @@
         window.itineraryData = {}; // Global store for daily itinerary data
         window.activeDayTab = null; // To keep track of the currently active tab date string (YYYY-MM-DD)
 
-        // Declare DOM element variables globally (only those that are still dynamic)
+        // Declare DOM element variables globally
         let dayTabsContainer;
-        let mobileDaySelect; // New: for mobile dropdown
+        let mobileDaySelect;
         let itineraryDetails;
         let currentDayDate;
         let detailLocation;
@@ -169,15 +168,6 @@
         let detailEveningShow;
         let userIdDisplay;
 
-        // Debounce function (no longer used for daily itinerary, but kept for potential future use)
-        let saveTimeout = null;
-        window.debounceSave = (func, delay = 1000) => {
-            return (...args) => {
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => func.apply(this, args), delay);
-            };
-        };
-
         // Function to update status messages
         window.updateStatus = (message, isError = false) => {
             const statusDiv = document.getElementById('status-message');
@@ -185,7 +175,6 @@
                 statusDiv.textContent = message;
                 statusDiv.classList.toggle('error', isError);
                 statusDiv.classList.remove('hidden');
-                // Hide after a few seconds unless it's an error
                 if (!isError) {
                     setTimeout(() => {
                         statusDiv.classList.add('hidden');
@@ -199,69 +188,12 @@
             if (!dateString) return 'N/A';
             try {
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                return new Date(dateString + 'T00:00:00').toLocaleDateString(undefined, options); // Add T00:00:00 to avoid timezone issues
+                return new Date(dateString + 'T00:00:00').toLocaleDateString(undefined, options);
             } catch (e) {
                 console.error("Error formatting date:", dateString, e);
-                return dateString; // Return original if formatting fails
+                return dateString;
             }
         }
-
-        // Helper function to validate YYYY-MM-DD date format (no longer used for adding days)
-        function isValidDate(dateString) {
-            const regex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!regex.test(dateString)) return false;
-            const date = new Date(dateString);
-            const timestamp = date.getTime();
-            if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) {
-                return false;
-            }
-            return date.toISOString().slice(0,10) === dateString;
-        }
-
-        // Custom Modal for prompts and confirmations (no longer used for add/remove day)
-        function showModal(message, type = 'alert', callback = null) {
-            let modal = document.getElementById('custom-modal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'custom-modal';
-                modal.classList.add('modal');
-                document.body.appendChild(modal);
-            }
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <p class="text-lg mb-4">${message}</p>
-                    ${type === 'prompt' ? '<input type="text" id="modal-input" class="modal-input" placeholder="YYYY-MM-DD">' : ''}
-                    <div class="modal-buttons">
-                        ${type === 'confirm' || type === 'prompt' ? '<button id="modal-cancel" class="btn btn-secondary">Cancel</button>' : ''}
-                        <button id="modal-ok" class="btn btn-primary">${type === 'alert' ? 'OK' : 'Confirm'}</button>
-                    </div>
-                </div>
-            `;
-            modal.style.display = 'flex';
-
-            document.getElementById('modal-ok').onclick = () => {
-                modal.style.display = 'none';
-                if (callback) {
-                    if (type === 'prompt') {
-                        const input = document.getElementById('modal-input').value;
-                        callback(true, input);
-                    } else {
-                        callback(true);
-                    }
-                }
-            };
-
-            if (type === 'confirm' || type === 'prompt') {
-                document.getElementById('modal-cancel').onclick = () => {
-                    modal.style.display = 'none';
-                    if (callback) callback(false);
-                };
-            }
-            if (type === 'prompt') {
-                document.getElementById('modal-input').focus();
-            }
-        }
-
 
         // Initialize Firebase and authenticate
         async function initializeFirebase() {
@@ -270,7 +202,6 @@
                 window.db = getFirestore(window.firebaseApp);
                 window.auth = getAuth(window.firebaseApp);
 
-                // Assign DOM elements here, ensuring they are available after the DOM loads
                 dayTabsContainer = document.getElementById('day-tabs');
                 mobileDaySelect = document.getElementById('mobile-day-select');
                 itineraryDetails = document.getElementById('itinerary-details');
@@ -286,20 +217,16 @@
                 detailEveningShow = document.getElementById('detail-evening-show');
                 userIdDisplay = document.getElementById('user-id-display');
 
-                // No event listeners for add/remove day buttons as they are removed
-
-                // Attach change listener for mobile dropdown
                 if (mobileDaySelect) {
                     mobileDaySelect.addEventListener('change', (event) => {
                         const selectedDate = event.target.value;
                         if (selectedDate) {
-                            window.activeDayTab = selectedDate; // Update active day
+                            window.activeDayTab = selectedDate;
                             displayDayDetails(selectedDate);
                         }
                     });
                 }
 
-                // For GitHub hosting, we'll always sign in anonymously as __initial_auth_token is Canvas-specific
                 await signInAnonymously(window.auth);
 
                 onAuthStateChanged(window.auth, async (user) => {
@@ -310,7 +237,6 @@
                         }
                         console.log("Firebase initialized and authenticated. User ID:", window.userId);
                         updateStatus("Loading itinerary...");
-                        // Load itinerary data directly from CSV (hardcoded)
                         const { itinerary: csvItinerary } = parseCSV(csvData);
                         window.itineraryData = csvItinerary;
                         renderDayTabs();
@@ -344,24 +270,24 @@ Arrival Time,,,,,,,
 Lightning Lane MultiPass,,,"Hollywood Studios\nstarting at Noon",,,,,
 Tier 1,,,"Slinky Dog",,Test Track,Jungle Cruise,
 Tier 2,,,"Toy Story Mania",,Spaceship Earth,Pirates,
-Tier 2,,,"Earliest avaiable Tier 2\n(burner ride)",,"Nemo & Friends\n(Burner Ride)","Magic Carpets of Aladdin (burner ride)",
+Tier 2,,,"Earliest available Tier 2\n(burner ride)",,"Nemo & Friends\n(Burner Ride)","Magic Carpets of Aladdin (burner ride)",
 Individual Lighting Lane,,,,Guardians?,Tron,
 ,,,,,
-Rope Drop,,,"Flight of Passage",,Frozen,"Tron; Peter Pan",
+Rope Drop,,,"Flight of Passage",,Frozen,Peter Pan,
 ,,,,,
 Snacks,,,,,,,
-Top 3 Priorities,,,"AK - Satu'Ii\nCheeseburger Steamed Pods",,,,"Gaston's Tavern's Creme Brulee Croissant",
+Top 3 Priorities,,,"AK - Satu'Ii\nCheeseburger Steamed Pods",,,,"Gaston's Tavern's Creme Brulé Croissant",
 ,,,"AK - French Fries with Pulled Pork and Cheese - Flame Tree",,,,"Cheeseburger Spring Rolls - Adventure Land",
-,,,"HW - Ronto Wrap - Galxys Edge",,,,"Chipotle BBQ Loaded Fries - Casey's Corner",
+,,,"HW - Ronto Wrap - Galaxy’s Edge",,,,"Chipotle BBQ Loaded Fries - Casey's Corner",
 ,,,,,,,"Corndog - Sleepy Hollow Refreshments",
 Lunch/Dinner,,,,,,,
-Must-Do,,,"AK - Satu'li Canteen - Noodle Bowl\nCheeseburger Steamed Pods",,,,"Sleep Hollow - Chicke & Waffle",
+Must-Do,,,"AK - Satu'li Canteen - Noodle Bowl\nCheeseburger Steamed Pods",,,,"Sleep Hollow - Chicken & Waffle",
 ,,,"Woody's Round up?",,,,"Cosmic Rays - Truffle French Onion Burger",
 ,,,"Woody's Lunch box?",,,,,,
 ,,,,,,,
 ,,,,,,,
 Snack,,,,,,,
-Evening Show,"Magic Kingdom Fireworks from Poly","Boardwalk & PuttPutt","Fantasmic: 9 pm\nWorld of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:\n9 or 11 pm",`;
+Evening Show,"Magic Kingdom Fireworks from Poly","Magic Kingdom Fireworks from the Poly","Fantasmic: 9 pm\nWorld of Ani: 9 pm","Boardwalk/Putt Putt",Luminous: 9 pm,"Disney Starlight:\n9 or 11 pm",`;
 
         function parseCSV(csv) {
             const lines = csv.split('\n').map(line => line.trim());
@@ -473,33 +399,11 @@ Evening Show,"Magic Kingdom Fireworks from Poly","Boardwalk & PuttPutt","Fantasm
             return { itinerary: parsedItinerary };
         }
 
-        // Function to save a specific part of the itinerary to Firestore (no longer used for daily itinerary)
-        window.saveDataToFirestore = window.debounceSave(async (dataType, dataKey, dataToSave) => {
-            if (!window.userId || !window.db) {
-                console.error("Firebase not initialized or user not authenticated. Cannot save data.");
-                updateStatus("Error: Not authenticated. Cannot save.", true);
-                return;
-            }
-
-            const docRef = doc(window.db, `artifacts/${appId}/users/${window.userId}/itineraryData`, dataKey);
-            try {
-                updateStatus("Saving...", false);
-                await setDoc(docRef, dataToSave, { merge: true });
-                updateStatus("Saved!", false);
-                console.log(`Document ${dataKey} (${dataType}) successfully saved!`);
-            } catch (e) {
-                console.error(`Error saving document ${dataKey} (${dataType}): `, e);
-                updateStatus(`Error saving: ${e.message}`, true);
-            }
-        });
+        // Function to save a specific part of the itinerary to Firestore (no longer used as daily itinerary is static)
+        window.saveDataToFirestore = () => { /* No-op */ };
 
         // Function to load all itinerary data from Firestore (now loads from CSV only)
-        async function loadItineraryFromFirestore(appId) {
-            if (!window.userId || !window.db) {
-                console.error("Firebase not initialized or user not authenticated. Cannot load data.");
-                return;
-            }
-
+        async function loadItineraryFromFirestore() {
             // Load itinerary data directly from CSV (hardcoded)
             const { itinerary: csvItinerary } = parseCSV(csvData);
             window.itineraryData = csvItinerary;
@@ -520,12 +424,12 @@ Evening Show,"Magic Kingdom Fireworks from Poly","Boardwalk & PuttPutt","Fantasm
                 if (detailLocation) detailLocation.textContent = '';
                 if (detailParkHours) detailParkHours.textContent = '';
                 if (detailLLTier1) detailLLTier1.innerHTML = '';
-                if (detailLLTier2) detailLLLLTier2.innerHTML = '';
+                if (detailLLTier2) detailLLTier2.innerHTML = '';
                 if (detailILL) detailILL.textContent = '';
                 if (detailRopeDrop) detailRopeDrop.textContent = '';
-                if (detailEveningShow) detailEveningShow.textContent = '';
                 if (detailSnacks) detailSnacks.innerHTML = '<li class="list-item italic text-gray-500">No snacks planned.</li>';
                 if (detailLunchDinner) detailLunchDinner.innerHTML = '<li class="list-item italic text-gray-500">No lunch/dinner planned.</li>';
+                if (detailEveningShow) detailEveningShow.textContent = '';
                 return;
             }
 
@@ -637,9 +541,6 @@ Evening Show,"Magic Kingdom Fireworks from Poly","Boardwalk & PuttPutt","Fantasm
             }
         }
 
-        // Removed: Function to add a new day to the itinerary
-        // Removed: Function to remove a day from the itinerary
-
         // Initialize Firebase when the window loads
         window.onload = initializeFirebase;
     </script>
@@ -681,9 +582,10 @@ Evening Show,"Magic Kingdom Fireworks from Poly","Boardwalk & PuttPutt","Fantasm
             </div>
         </div>
 
+        <!-- Daily Itinerary Section -->
         <div class="mb-6">
             <h2 class="text-2xl font-semibold text-center mb-4 text-indigo-700">Daily Itinerary</h2>
-            <!-- Day Management Buttons (Removed) -->
+            <!-- Day Management Buttons (Removed as per request) -->
             <div class="flex justify-center gap-4 mb-4 hidden">
                 <button id="add-day-btn" class="btn btn-primary">Add Day</button>
                 <button id="remove-day-btn" class="btn btn-danger">Remove Selected Day</button>
@@ -698,7 +600,6 @@ Evening Show,"Magic Kingdom Fireworks from Poly","Boardwalk & PuttPutt","Fantasm
                     <!-- Options will be injected here by JavaScript -->
                 </select>
             </div>
-
 
             <!-- Tab Content -->
             <div id="itinerary-details" class="tab-content-container">
