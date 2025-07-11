@@ -87,12 +87,58 @@
         .status-message.error {
             color: #ef4444; /* Red 500 */
         }
+        .btn {
+            @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200 ease-in-out;
+        }
+        .btn-primary {
+            @apply bg-indigo-600 text-white hover:bg-indigo-700 shadow-md;
+        }
+        .btn-secondary {
+            @apply bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-md;
+        }
+        .btn-danger {
+            @apply bg-red-500 text-white hover:bg-red-600 shadow-md;
+        }
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .modal-input {
+            width: calc(100% - 20px);
+            padding: 0.5rem;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 0.5rem;
+        }
     </style>
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Config provided by the user for GitHub hosting
         const firebaseConfig = {
@@ -136,6 +182,9 @@
         let detailLunchDinner;
         let detailEveningShow;
         let userIdDisplay;
+        let addHotelBtn;
+        let addDayBtn;
+        let removeDayBtn;
 
 
         // Debounce function to limit how often save operations are called
@@ -175,6 +224,68 @@
             }
         }
 
+        // Helper function to validate YYYY-MM-DD date format
+        function isValidDate(dateString) {
+            // Check for YYYY-MM-DD format
+            const regex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!regex.test(dateString)) return false;
+
+            const date = new Date(dateString);
+            const timestamp = date.getTime();
+
+            if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) {
+                return false; // Invalid date
+            }
+
+            // Check if the date components match the input string to prevent invalid dates like "2023-02-30"
+            return date.toISOString().slice(0,10) === dateString;
+        }
+
+        // Custom Modal for prompts and confirmations
+        function showModal(message, type = 'alert', callback = null) {
+            let modal = document.getElementById('custom-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'custom-modal';
+                modal.classList.add('modal');
+                document.body.appendChild(modal);
+            }
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <p class="text-lg mb-4">${message}</p>
+                    ${type === 'prompt' ? '<input type="text" id="modal-input" class="modal-input" placeholder="YYYY-MM-DD">' : ''}
+                    <div class="modal-buttons">
+                        ${type === 'confirm' || type === 'prompt' ? '<button id="modal-cancel" class="btn btn-secondary">Cancel</button>' : ''}
+                        <button id="modal-ok" class="btn btn-primary">${type === 'alert' ? 'OK' : 'Confirm'}</button>
+                    </div>
+                </div>
+            `;
+            modal.style.display = 'flex';
+
+            document.getElementById('modal-ok').onclick = () => {
+                modal.style.display = 'none';
+                if (callback) {
+                    if (type === 'prompt') {
+                        const input = document.getElementById('modal-input').value;
+                        callback(true, input);
+                    } else {
+                        callback(true);
+                    }
+                }
+            };
+
+            if (type === 'confirm' || type === 'prompt') {
+                document.getElementById('modal-cancel').onclick = () => {
+                    modal.style.display = 'none';
+                    if (callback) callback(false);
+                };
+            }
+            if (type === 'prompt') {
+                document.getElementById('modal-input').focus();
+            }
+        }
+
+
         // Initialize Firebase and authenticate
         async function initializeFirebase() {
             try {
@@ -201,6 +312,14 @@
                 detailLunchDinner = document.getElementById('detail-lunch-dinner');
                 detailEveningShow = document.getElementById('detail-evening-show');
                 userIdDisplay = document.getElementById('user-id-display');
+                addHotelBtn = document.getElementById('add-hotel-btn');
+                addDayBtn = document.getElementById('add-day-btn');
+                removeDayBtn = document.getElementById('remove-day-btn');
+
+                // Attach event listeners for new buttons
+                if (addHotelBtn) addHotelBtn.addEventListener('click', addHotel);
+                if (addDayBtn) addDayBtn.addEventListener('click', addDay);
+                if (removeDayBtn) removeDayBtn.addEventListener('click', removeDay);
 
 
                 // For GitHub hosting, we'll always sign in anonymously as __initial_auth_token is Canvas-specific
@@ -551,13 +670,53 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                 if (data.hotels && data.hotels.length > 0) {
                     data.hotels.forEach((hotel, index) => {
                         const li = document.createElement('li');
-                        li.classList.add('list-item');
-                        li.innerHTML = `<span class="font-semibold" contenteditable="true" data-field="hotel-name" data-index="${index}">${hotel.name || 'N/A'}</span> (<span contenteditable="true" data-field="hotel-dates" data-index="${index}">${hotel.dates || 'N/A'}</span>) - Confirmation: <span contenteditable="true" data-field="hotel-confirmation" data-index="${index}">${hotel.confirmation || 'N/A'}</span>`;
+                        li.classList.add('list-item', 'flex', 'items-center', 'gap-2'); // Add flex for layout
+                        li.innerHTML = `
+                            <span class="font-semibold" contenteditable="true" data-field="hotel-name" data-index="${index}">${hotel.name || 'N/A'}</span>
+                            (<span contenteditable="true" data-field="hotel-dates" data-index="${index}">${hotel.dates || 'N/A'}</span>) -
+                            Confirmation: <span contenteditable="true" data-field="hotel-confirmation" data-index="${index}">${hotel.confirmation || 'N/A'}</span>
+                            <button class="btn btn-danger text-sm px-2 py-1" data-action="remove-hotel" data-index="${index}">Remove</button>
+                        `;
                         hotelInfoList.appendChild(li);
                     });
                 } else {
                     hotelInfoList.innerHTML = '<li class="list-item italic text-gray-500">No hotel information available.</li>';
                 }
+
+                // Attach blur listeners for dynamically created hotel fields
+                hotelInfoList.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                    el.onblur = (event) => {
+                        const field = event.target.dataset.field;
+                        const index = parseInt(event.target.dataset.index);
+                        let value = event.target.textContent.trim();
+
+                        if (!window.tripOverview.hotels[index]) {
+                            window.tripOverview.hotels[index] = {};
+                        }
+                        if (field === 'hotel-name') {
+                            window.tripOverview.hotels[index].name = value;
+                        } else if (field === 'hotel-dates') {
+                            window.tripOverview.hotels[index].dates = value;
+                        } else if (field === 'hotel-confirmation') {
+                            window.tripOverview.hotels[index].confirmation = value;
+                        }
+                        window.saveDataToFirestore('tripOverview', 'tripOverview', window.tripOverview);
+                    };
+                });
+
+                // Attach click listeners for remove hotel buttons
+                hotelInfoList.querySelectorAll('[data-action="remove-hotel"]').forEach(button => {
+                    button.onclick = (event) => {
+                        const indexToRemove = parseInt(event.target.dataset.index);
+                        showModal(`Are you sure you want to remove this hotel entry?`, 'confirm', (confirmed) => {
+                            if (confirmed) {
+                                window.tripOverview.hotels.splice(indexToRemove, 1);
+                                window.saveDataToFirestore('tripOverview', 'tripOverview', window.tripOverview);
+                                populateTripOverview(window.tripOverview); // Re-render the list
+                            }
+                        });
+                    };
+                });
             }
 
             if (carServiceInfo) { // Ensure element exists
@@ -567,20 +726,17 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                 strollerRentalInfo.textContent = data.strollerRental || 'N/A';
             }
 
-            // Add event listeners for trip overview editable fields
-            document.querySelectorAll('#flight-arrival-info, #flight-departure-info, #car-service-info, #stroller-rental-info, #hotel-info [contenteditable="true"]').forEach(el => {
+            // Add event listeners for trip overview editable fields (non-hotel)
+            document.querySelectorAll('#flight-arrival-info, #flight-departure-info, #car-service-info, #stroller-rental-info').forEach(el => {
                 el.onblur = (event) => {
-                    const field = event.target.dataset.field;
-                    const index = event.target.dataset.index;
+                    const field = event.target.id; // Use ID for these specific fields
                     let value = event.target.textContent.trim();
 
                     if (field === 'flight-arrival-info') {
-                        // Attempt to parse "UA2451 on 2025-07-23 at 18:25:00"
                         const parts = value.match(/(.+) on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2}:\d{2})/);
                         if (parts) {
                             window.tripOverview.arrivalFlight = { number: parts[1], date: parts[2], time: parts[3] };
                         } else {
-                            // Fallback if format is unexpected
                             window.tripOverview.arrivalFlight = { number: value, date: '', time: '' };
                         }
                     } else if (field === 'flight-departure-info') {
@@ -594,22 +750,20 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                         window.tripOverview.carService = value;
                     } else if (field === 'stroller-rental-info') {
                         window.tripOverview.strollerRental = value;
-                    } else if (field && index !== undefined) {
-                        const hotelIndex = parseInt(index);
-                        if (!window.tripOverview.hotels[hotelIndex]) {
-                            window.tripOverview.hotels[hotelIndex] = {};
-                        }
-                        if (field === 'hotel-name') {
-                            window.tripOverview.hotels[hotelIndex].name = value;
-                        } else if (field === 'hotel-dates') {
-                            window.tripOverview.hotels[hotelIndex].dates = value;
-                        } else if (field === 'hotel-confirmation') {
-                            window.tripOverview.hotels[hotelIndex].confirmation = value;
-                        }
                     }
                     window.saveDataToFirestore('tripOverview', 'tripOverview', window.tripOverview);
                 };
             });
+        }
+
+        // Function to add a new hotel entry
+        function addHotel() {
+            if (!window.tripOverview.hotels) {
+                window.tripOverview.hotels = [];
+            }
+            window.tripOverview.hotels.push({ name: '', dates: '', confirmation: '' });
+            window.saveDataToFirestore('tripOverview', 'tripOverview', window.tripOverview);
+            populateTripOverview(window.tripOverview); // Re-render to show the new empty entry
         }
 
 
