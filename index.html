@@ -39,7 +39,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-grow: 1; /* Allow tabs to grow */
+            flex-shrink: 0; /* Prevent shrinking */
             min-width: 120px; /* Minimum width for each tab */
             text-align: center;
         }
@@ -161,7 +161,7 @@
         window.userId = null;
         window.itineraryData = {}; // Global store for daily itinerary data
         window.tripOverview = {}; // Global store for trip overview data
-        window.activeDayTab = null; // To keep track of the currently active tab
+        window.activeDayTab = null; // To keep track of the currently active tab date string (YYYY-MM-DD)
 
         // Declare DOM element variables globally
         let flightArrivalInfo;
@@ -170,6 +170,7 @@
         let carServiceInfo;
         let strollerRentalInfo;
         let dayTabsContainer;
+        let mobileDaySelect; // New: for mobile dropdown
         let itineraryDetails;
         let currentDayDate;
         let detailLocation;
@@ -217,7 +218,7 @@
             if (!dateString) return 'N/A';
             try {
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                return new Date(dateString).toLocaleDateString(undefined, options);
+                return new Date(dateString + 'T00:00:00').toLocaleDateString(undefined, options); // Add T00:00:00 to avoid timezone issues
             } catch (e) {
                 console.error("Error formatting date:", dateString, e);
                 return dateString; // Return original if formatting fails
@@ -300,6 +301,7 @@
                 carServiceInfo = document.getElementById('car-service-info');
                 strollerRentalInfo = document.getElementById('stroller-rental-info');
                 dayTabsContainer = document.getElementById('day-tabs');
+                mobileDaySelect = document.getElementById('mobile-day-select'); // Get reference to new select
                 itineraryDetails = document.getElementById('itinerary-details');
                 currentDayDate = document.getElementById('current-day-date');
                 detailLocation = document.getElementById('detail-location');
@@ -321,6 +323,16 @@
                 if (addDayBtn) addDayBtn.addEventListener('click', addDay);
                 if (removeDayBtn) removeDayBtn.addEventListener('click', removeDay);
 
+                // Attach change listener for mobile dropdown
+                if (mobileDaySelect) {
+                    mobileDaySelect.addEventListener('change', (event) => {
+                        const selectedDate = event.target.value;
+                        if (selectedDate) {
+                            window.activeDayTab = selectedDate; // Update active day
+                            displayDayDetails(selectedDate);
+                        }
+                    });
+                }
 
                 // For GitHub hosting, we'll always sign in anonymously as __initial_auth_token is Canvas-specific
                 await signInAnonymously(window.auth);
@@ -334,6 +346,8 @@
                         console.log("Firebase initialized and authenticated. User ID:", window.userId);
                         updateStatus("Loading itinerary...");
                         await loadItineraryFromFirestore(appId); // Pass appId to load function
+                        // Add resize listener after initial load
+                        window.addEventListener('resize', renderDayTabs);
                     } else {
                         console.log("No user signed in.");
                         window.userId = null;
@@ -581,14 +595,14 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                             window.itineraryData[docId] = change.doc.data();
                             console.log(`Daily itinerary for ${docId} loaded/updated.`);
                             // If the current tab is the one being updated, re-display it
-                            if (window.activeDayTab && window.activeDayTab.dataset.date === docId) {
+                            if (window.activeDayTab === docId) { // Compare with date string
                                 displayDayDetails(docId);
                             }
                         } else if (change.type === "removed") {
                             delete window.itineraryData[docId];
                             console.log(`Daily itinerary for ${docId} removed.`);
                             // If the removed tab was active, clear details
-                            if (window.activeDayTab && window.activeDayTab.dataset.date === docId) {
+                            if (window.activeDayTab === docId) { // Compare with date string
                                 displayDayDetails(null); // Clear content
                             }
                         }
@@ -598,16 +612,18 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                     renderDayTabs();
 
                     // If no tab is active, or the active tab was removed, activate the first one
-                    if (!window.activeDayTab || !window.itineraryData[window.activeDayTab.dataset.date]) {
+                    if (!window.activeDayTab || !window.itineraryData[window.activeDayTab]) {
                         const sortedDates = Object.keys(window.itineraryData).sort();
                         if (sortedDates.length > 0) {
-                            const firstTabHeader = document.querySelector(`.tab-header[data-date="${sortedDates[0]}"]`);
-                            if (firstTabHeader) {
-                                firstTabHeader.click();
-                            }
+                            window.activeDayTab = sortedDates[0]; // Set active day to the first one
+                            displayDayDetails(sortedDates[0]);
                         } else {
+                            window.activeDayTab = null;
                             displayDayDetails(null); // Clear if no data
                         }
+                    } else {
+                        // Ensure the currently active tab is re-selected visually
+                        displayDayDetails(window.activeDayTab);
                     }
                     updateStatus("Itinerary loaded.");
 
@@ -635,10 +651,8 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                     renderDayTabs();
                     const sortedDates = Object.keys(window.itineraryData).sort();
                     if (sortedDates.length > 0) {
-                        const firstTabHeader = document.querySelector(`.tab-header[data-date="${sortedDates[0]}"]`);
-                        if (firstTabHeader) {
-                            firstTabHeader.click();
-                        }
+                        window.activeDayTab = sortedDates[0]; // Set active day to the first one
+                        displayDayDetails(sortedDates[0]);
                     }
                 }
             } catch (error) {
@@ -957,28 +971,66 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
         }
 
 
-        // Function to render day tabs
+        // Function to render day tabs (responsive)
         function renderDayTabs() {
             const sortedDates = Object.keys(window.itineraryData).sort();
-            if (dayTabsContainer) { // Ensure element exists
-                dayTabsContainer.innerHTML = ''; // Clear existing tabs
+            const isMobile = window.innerWidth < 768; // Tailwind's 'md' breakpoint is 768px
 
-                sortedDates.forEach(date => {
+            if (dayTabsContainer) {
+                dayTabsContainer.innerHTML = ''; // Clear existing tabs
+                // Hide or show based on screen size
+                dayTabsContainer.classList.toggle('hidden', isMobile);
+                dayTabsContainer.classList.toggle('flex', !isMobile);
+            }
+            if (mobileDaySelect) {
+                mobileDaySelect.innerHTML = ''; // Clear existing options
+                // Hide or show based on screen size
+                mobileDaySelect.classList.toggle('hidden', !isMobile);
+                mobileDaySelect.classList.toggle('flex', isMobile);
+            }
+
+            sortedDates.forEach(date => {
+                if (!isMobile && dayTabsContainer) {
+                    // Desktop tabs
                     const tabHeader = document.createElement('div');
-                    tabHeader.textContent = formatDate(date); // Format date for tab header
+                    tabHeader.textContent = formatDate(date);
                     tabHeader.classList.add('tab-header');
                     tabHeader.dataset.date = date;
 
-                    tabHeader.addEventListener('click', () => {
-                        if (window.activeDayTab) {
-                            window.activeDayTab.classList.remove('active');
-                        }
+                    if (window.activeDayTab === date) {
                         tabHeader.classList.add('active');
-                        window.activeDayTab = tabHeader;
+                    }
+
+                    tabHeader.addEventListener('click', () => {
+                        window.activeDayTab = date; // Set active day
                         displayDayDetails(date);
+                        renderDayTabs(); // Re-render to update active class
                     });
                     dayTabsContainer.appendChild(tabHeader);
-                });
+                } else if (isMobile && mobileDaySelect) {
+                    // Mobile dropdown
+                    const option = document.createElement('option');
+                    option.value = date;
+                    option.textContent = formatDate(date);
+                    if (window.activeDayTab === date) {
+                        option.selected = true;
+                    }
+                    mobileDaySelect.appendChild(option);
+                }
+            });
+
+            // Ensure the correct tab/option is selected after re-render
+            if (window.activeDayTab) {
+                if (!isMobile) {
+                    const activeTabElement = document.querySelector(`.tab-header[data-date="${window.activeDayTab}"]`);
+                    if (activeTabElement) {
+                        activeTabElement.classList.add('active');
+                    }
+                } else {
+                    if (mobileDaySelect) {
+                        mobileDaySelect.value = window.activeDayTab;
+                    }
+                }
             }
         }
 
@@ -1010,12 +1062,9 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
 
                     window.itineraryData[trimmedDate] = newDayData;
                     await window.saveDataToFirestore('dailyItinerary', trimmedDate, newDayData);
+                    window.activeDayTab = trimmedDate; // Set the newly added day as active
                     renderDayTabs();
-                    // Activate the new tab
-                    const newTabHeader = document.querySelector(`.tab-header[data-date="${trimmedDate}"]`);
-                    if (newTabHeader) {
-                        newTabHeader.click();
-                    }
+                    displayDayDetails(trimmedDate);
                     updateStatus(`Day for ${formatDate(trimmedDate)} added successfully!`);
                 }
             });
@@ -1028,20 +1077,19 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                 return;
             }
 
-            const dateToRemove = window.activeDayTab.dataset.date;
+            const dateToRemove = window.activeDayTab; // Use the stored activeDayTab date string
             showModal(`Are you sure you want to remove the itinerary for ${formatDate(dateToRemove)}? This cannot be undone.`, 'confirm', async (confirmed) => {
                 if (confirmed) {
                     try {
                         await deleteDoc(doc(window.db, `artifacts/${appId}/users/${window.userId}/itineraryData`, dateToRemove));
                         delete window.itineraryData[dateToRemove];
-                        renderDayTabs();
+                        window.activeDayTab = null; // Clear active tab
+                        renderDayTabs(); // Re-render to update tabs and select new active if available
                         // Select the first available tab or clear details if none left
                         const sortedDates = Object.keys(window.itineraryData).sort();
                         if (sortedDates.length > 0) {
-                            const firstTabHeader = document.querySelector(`.tab-header[data-date="${sortedDates[0]}"]`);
-                            if (firstTabHeader) {
-                                firstTabHeader.click();
-                            }
+                            window.activeDayTab = sortedDates[0];
+                            displayDayDetails(sortedDates[0]);
                         } else {
                             displayDayDetails(null); // Clear content
                         }
@@ -1102,10 +1150,17 @@ World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
                 <button id="add-day-btn" class="btn btn-primary">Add Day</button>
                 <button id="remove-day-btn" class="btn btn-danger">Remove Selected Day</button>
             </div>
-            <!-- Tab Headers -->
-            <div id="day-tabs" class="flex justify-center overflow-x-auto whitespace-nowrap pb-2 -mb-1">
+            <!-- Tab Headers (Desktop) -->
+            <div id="day-tabs" class="flex justify-center overflow-x-auto whitespace-nowrap pb-2 -mb-1 hidden md:flex">
                 <!-- Day tab headers will be injected here by JavaScript -->
             </div>
+            <!-- Mobile Day Select (Mobile) -->
+            <div class="flex justify-center mb-4 md:hidden">
+                <select id="mobile-day-select" class="block w-full max-w-xs p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <!-- Options will be injected here by JavaScript -->
+                </select>
+            </div>
+
 
             <!-- Tab Content -->
             <div id="itinerary-details" class="tab-content-container">
