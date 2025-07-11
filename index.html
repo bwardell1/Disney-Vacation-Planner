@@ -232,46 +232,45 @@
 
         // Function to parse the initial CSV data
         // This data now comes from "Disney World Planning Info.xlsx - Intinerary.csv"
-        const csvData = `DAY,2025-07-24,,2025-07-25,,2025-07-26,,2025-07-27,,2025-07-28,,2025-07-29,,2025-07-30
+        const csvData = `DAY,7/24,7/25,7/26,7/27,7/28,7/29,07/30/2025
 PARK/LOCATION,"Check In Day
-Blizzard Beach",,"Check In Day
-Typhoon Lagoon",,"Animal Kingdom
-& Hollywood",,Rest,,Epcot,,Magic Kingdom,,Poly Pool
-PARK HOURS,10:00 AM to 7:00 PM,,10:00 AM to 7:00 PM,,"7:30 AM to 7:00 pm
-8:30 am to 9:00 pm",,,,"8:30 AM to 11 pm
-Extended Evening",,8:30 am to 11 pm,,
-Arrival Time,,,,,,,,,,,,,
-Lightning Lane MultiPass,,,,,"Hollywood Studios
-starting at Noon",,,,,,,,
-Tier 1,,,,,Slinky Dog,,,,Test Track,,Jungle Cruise,,
-Tier 2,,,,,Toy Story Mania,,,,Spaceship Earth,,Pirates,,
-Tier 2,,,,,"Earliest avaiable Tier 2
-(burner ride)",,,,"Nemo & Friends 
-(Burner Ride)",,Magic Carpets of Aladdin (burner ride),,
-Individaul Lighting Lane,,,,,,,,,Guardians?,,Tron,,
-,,,,,,,,,,,,,
-Rope Drop,,,,,Flight of Passage,,,,Frozen,,Peter Pan,,
-,,,,,,,,,,,,,
-Snacks,,,,,,,,,,,,,
-Top 3 Priorities,,,,,"AK - Satu'Ii
-Cheeseburger Steamed Pods",,,,,,Gaston's Tavern's Creme Brulee Croissant,,
-,,,,,AK - French Fries with Pulled Pork and Cheese - Flame Tree,,,,,,Cheeseburger Spring Rolls - Adventure Land,,
-,,,,,HW - Ronto Wrap - Galxys Edge,,,,,,Chipotle BBQ Loaded Fries - Casey's Corner,,
-,,,,,,,,,,,Corndog - Sleepy Hollow Refreshments,,
-Lunch/Dinner,,,,,,,,,,,,,
-Must-Do,,,,,,,,,,,,,
-,,,,,"AK - Satu'li Canteen - Noodle Bowl
-Cheeseburger Steamed Pods",,,,,,Sleep Hollow - Chicke & Waffle,,
-,,,,,,,,,,,Cosmic Rays - Truffle French Onion Burger,,
-,,,,,,,,,,,,,
-,,,,,Woody's Round up? ,,,,,,,,
-,,,,,Woody's Lunch box? ,,,,,,,,
-,,,,,,,,,,,,,
-,,,,,,,,,,,,,
-Snack,,,,,,,,,,,,,
-Evening Show,Magic Kingdom Fireworks from Poly,,,,"Fantasmic: 9 pm
-World of Ani: 9 pm",,,,Luminous: 9 pm,,"Disney Starlight: 
-9 or 11 pm",,`;
+Blizzard Beach","Check In Day
+Typhoon Lagoon","Animal Kingdom
+& Hollywood",Rest,Epcot,Magic Kingdom,Poly Pool
+PARK HOURS,"10:00 AM to 7:00 PM","10:00 AM to 7:00 PM","7:30 AM to 7:00 pm
+8:30 am to 9:00 pm",,"8:30 AM to 11 pm
+Extended Evening","8:30 am to 11 pm",
+Arrival Time,,,,,,,
+Lightning Lane MultiPass,,,"Hollywood Studios
+starting at Noon",,,,,
+Tier 1,,,"Slinky Dog",,Test Track,Jungle Cruise,
+Tier 2,,,"Toy Story Mania",,Spaceship Earth,Pirates,
+Tier 2,,,"Earliest available Tier 2
+(burner ride)",,"Nemo & Friends
+(Burner Ride)","Magic Carpets of Aladdin (burner ride)",
+Individual Lighting Lane,,,,Guardians?,Tron,
+,,,,,
+Rope Drop,,,"Flight of Passage",,Frozen,Peter Pan,
+,,,,,
+Snacks,,,,,,,
+Top 3 Priorities,,,"AK - Satu'Ii
+Cheeseburger Steamed Pods",,,,"Gaston's Tavern's Creme Brulee Croissant",,
+,,,"AK - French Fries with Pulled Pork and Cheese - Flame Tree",,,,"Cheeseburger Spring Rolls - Adventure Land",,
+,,,"HW - Ronto Wrap - Galxys Edge",,,,"Chipotle BBQ Loaded Fries - Casey's Corner",,
+,,,,,,,"Corndog - Sleepy Hollow Refreshments",,
+Lunch/Dinner,,,,,,,
+Must-Do,,,"AK - Satu'li Canteen - Noodle Bowl
+Cheeseburger Steamed Pods",,,,"Sleep Hollow - Chicke & Waffle",,
+,,,,,,,"Cosmic Rays - Truffle French Onion Burger",,
+,,,,,,,
+,,,"Woody's Round up?",,,,,,
+,,,"Woody's Lunch box?",,,,,,
+,,,,,,,
+,,,,,,,
+Snack,,,,,,,
+Evening Show,"Magic Kingdom Fireworks from Poly",,"Fantasmic: 9 pm
+World of Ani: 9 pm",,Luminous: 9 pm,"Disney Starlight:
+9 or 11 pm",`;
 
         function parseCSV(csv) {
             const lines = csv.split('\n').map(line => line.trim());
@@ -295,9 +294,9 @@ World of Ani: 9 pm",,,,Luminous: 9 pm,,"Disney Starlight:
             const TIER2_ROW_IDX_2 = 7;
             const INDIVIDUAL_LL_ROW_IDX = 8;
             const ROPE_DROP_ROW_IDX = 10;
-            const SNACKS_HEADER_ROW_IDX = 12;
-            const LUNCH_DINNER_HEADER_ROW_IDX = 17;
-            const EVENING_SHOW_ROW_IDX = 24;
+            const SNACKS_HEADER_ROW_IDX = 12; // This is the "Snacks" header row
+            const LUNCH_DINNER_HEADER_ROW_IDX = 17; // This is the "Lunch/Dinner" header row
+            const EVENING_SHOW_ROW_IDX = 24; // This is the "Evening Show" header row
 
 
             // Helper to get cell value, handling empty strings and quoted commas
@@ -314,8 +313,14 @@ World of Ani: 9 pm",,,,Luminous: 9 pm,,"Disney Starlight:
 
             const dayColumns = [];
             for (let i = 0; i < dayHeaders.length; i++) {
-                if (dayHeaders[i].match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    dayColumns.push({ date: dayHeaders[i], index: i });
+                // Adjust regex to match "7/24" or "07/30/2025" and convert to YYYY-MM-DD
+                const dateMatch = dayHeaders[i].match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);
+                if (dateMatch) {
+                    const month = dateMatch[1].padStart(2, '0');
+                    const day = dateMatch[2].padStart(2, '0');
+                    const year = dateMatch[3] || '2025'; // Assume 2025 if year is missing (e.g., "7/24")
+                    const formattedDate = `${year}-${month}-${day}`;
+                    dayColumns.push({ date: formattedDate, index: i });
                 }
             }
 
@@ -327,7 +332,8 @@ World of Ani: 9 pm",,,,Luminous: 9 pm,,"Disney Starlight:
                     const items = [];
                     for (let i = startIdx; i <= endIdx; i++) {
                         const item = getCellValue(i, col);
-                        if (item && item !== 'Snacks' && item !== 'Lunch/Dinner' && item !== 'Must-Do' && item !== 'Top 3 Priorities') {
+                        // Only add if item is not empty and not a header for the list
+                        if (item && !['Snacks', 'Lunch/Dinner', 'Must-Do', 'Top 3 Priorities', 'Snack'].includes(item.trim())) {
                             items.push(item);
                         }
                     }
@@ -344,17 +350,34 @@ World of Ani: 9 pm",,,,Luminous: 9 pm,,"Disney Starlight:
                 const ropeDrop = getCellValue(ROPE_DROP_ROW_IDX, colIdx);
                 const eveningShow = getCellValue(EVENING_SHOW_ROW_IDX, colIdx);
 
-                let snacksContentEndIdx = LUNCH_DINNER_HEADER_ROW_IDX - 1;
-                let lunchDinnerContentEndIdx = EVENING_SHOW_ROW_IDX - 1; // Corrected typo here
+                // Determine the end index for snacks and lunch/dinner based on the actual content
+                // The image shows "Top 3 Priorities" as a sub-header for snacks
+                // And "Must-Do" as a sub-header for Lunch/Dinner
+                // We need to find the actual content rows for snacks and lunch/dinner
+                let currentSnacksEndIdx = LUNCH_DINNER_HEADER_ROW_IDX - 1;
+                let currentLunchDinnerEndIdx = EVENING_SHOW_ROW_IDX - 1;
 
-                const snackHeaderLaterIdx = lines.findIndex((line, idx) => idx > LUNCH_DINNER_HEADER_ROW_IDX && line.startsWith('Snack,'));
-                if (snackHeaderLaterIdx !== -1) {
-                    lunchDinnerContentEndIdx = snackHeaderLaterIdx - 1;
-                    snacksContentEndIdx = EVENING_SHOW_ROW_IDX - 1; // Corrected typo here
+                // Find the actual end of the snacks list before the next header
+                for (let i = SNACKS_HEADER_ROW_IDX + 1; i < LUNCH_DINNER_HEADER_ROW_IDX; i++) {
+                    if (getCellValue(i, colIdx).trim() === '') {
+                        currentSnacksEndIdx = i - 1;
+                        break;
+                    }
+                    currentSnacksEndIdx = i; // Keep extending if there's content
                 }
 
-                const snacks = getListItems(SNACKS_HEADER_ROW_IDX + 1, snacksContentEndIdx, colIdx);
-                const lunchDinner = getListItems(LUNCH_DINNER_HEADER_ROW_IDX + 1, lunchDinnerContentEndIdx, colIdx);
+                // Find the actual end of the lunch/dinner list before the next header
+                for (let i = LUNCH_DINNER_HEADER_ROW_IDX + 1; i < EVENING_SHOW_ROW_IDX; i++) {
+                    if (getCellValue(i, colIdx).trim() === '') {
+                        currentLunchDinnerEndIdx = i - 1;
+                        break;
+                    }
+                    currentLunchDinnerEndIdx = i; // Keep extending if there's content
+                }
+
+
+                const snacks = getListItems(SNACKS_HEADER_ROW_IDX + 1, currentSnacksEndIdx, colIdx);
+                const lunchDinner = getListItems(LUNCH_DINNER_HEADER_ROW_IDX + 1, currentLunchDinnerEndIdx, colIdx);
 
                 parsedItinerary[date] = {
                     date: date,
