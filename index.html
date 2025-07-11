@@ -68,16 +68,7 @@
         .list-item {
             margin-bottom: 0.25rem;
         }
-        [contenteditable="true"] {
-            outline: 1px dashed #a78bfa; /* Purple 300 for editable fields */
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            min-height: 1.5rem; /* Ensure visibility for empty editable fields */
-        }
-        [contenteditable="true"]:focus {
-            outline: 2px solid #6d28d9; /* Deep purple on focus */
-            background-color: #f5f3ff; /* Light purple background on focus */
-        }
+        /* Removed contenteditable styles as fields are no longer editable */
         .status-message {
             text-align: center;
             margin-top: 1rem;
@@ -160,7 +151,6 @@
         window.auth = null;
         window.userId = null;
         window.itineraryData = {}; // Global store for daily itinerary data
-        // window.tripOverview = {}; // No longer needed as trip overview is hardcoded
         window.activeDayTab = null; // To keep track of the currently active tab date string (YYYY-MM-DD)
 
         // Declare DOM element variables globally (only those that are still dynamic)
@@ -178,11 +168,8 @@
         let detailLunchDinner;
         let detailEveningShow;
         let userIdDisplay;
-        let addDayBtn;
-        let removeDayBtn;
 
-
-        // Debounce function to limit how often save operations are called
+        // Debounce function (no longer used for daily itinerary, but kept for potential future use)
         let saveTimeout = null;
         window.debounceSave = (func, delay = 1000) => {
             return (...args) => {
@@ -219,24 +206,19 @@
             }
         }
 
-        // Helper function to validate YYYY-MM-DD date format
+        // Helper function to validate YYYY-MM-DD date format (no longer used for adding days)
         function isValidDate(dateString) {
-            // Check for YYYY-MM-DD format
             const regex = /^\d{4}-\d{2}-\d{2}$/;
             if (!regex.test(dateString)) return false;
-
             const date = new Date(dateString);
             const timestamp = date.getTime();
-
             if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) {
-                return false; // Invalid date
+                return false;
             }
-
-            // Check if the date components match the input string to prevent invalid dates like "2023-02-30"
             return date.toISOString().slice(0,10) === dateString;
         }
 
-        // Custom Modal for prompts and confirmations
+        // Custom Modal for prompts and confirmations (no longer used for add/remove day)
         function showModal(message, type = 'alert', callback = null) {
             let modal = document.getElementById('custom-modal');
             if (!modal) {
@@ -289,9 +271,8 @@
                 window.auth = getAuth(window.firebaseApp);
 
                 // Assign DOM elements here, ensuring they are available after the DOM loads
-                // Removed: flightArrivalInfo, flightDepartureInfo, hotelInfoList, carServiceInfo, strollerRentalInfo, addHotelBtn
                 dayTabsContainer = document.getElementById('day-tabs');
-                mobileDaySelect = document.getElementById('mobile-day-select'); // Get reference to new select
+                mobileDaySelect = document.getElementById('mobile-day-select');
                 itineraryDetails = document.getElementById('itinerary-details');
                 currentDayDate = document.getElementById('current-day-date');
                 detailLocation = document.getElementById('detail-location');
@@ -304,13 +285,8 @@
                 detailLunchDinner = document.getElementById('detail-lunch-dinner');
                 detailEveningShow = document.getElementById('detail-evening-show');
                 userIdDisplay = document.getElementById('user-id-display');
-                addDayBtn = document.getElementById('add-day-btn');
-                removeDayBtn = document.getElementById('remove-day-btn');
 
-                // Attach event listeners for new buttons
-                // Removed: if (addHotelBtn) addHotelBtn.addEventListener('click', addHotel);
-                if (addDayBtn) addDayBtn.addEventListener('click', addDay);
-                if (removeDayBtn) removeDayBtn.addEventListener('click', removeDay);
+                // No event listeners for add/remove day buttons as they are removed
 
                 // Attach change listener for mobile dropdown
                 if (mobileDaySelect) {
@@ -329,18 +305,26 @@
                 onAuthStateChanged(window.auth, async (user) => {
                     if (user) {
                         window.userId = user.uid;
-                        if (userIdDisplay) { // Check if element exists before setting textContent
+                        if (userIdDisplay) {
                             userIdDisplay.textContent = `User ID: ${window.userId}`;
                         }
                         console.log("Firebase initialized and authenticated. User ID:", window.userId);
                         updateStatus("Loading itinerary...");
-                        await loadItineraryFromFirestore(appId); // Pass appId to load function
-                        // Add resize listener after initial load
+                        // Load itinerary data directly from CSV (hardcoded)
+                        const { itinerary: csvItinerary } = parseCSV(csvData);
+                        window.itineraryData = csvItinerary;
+                        renderDayTabs();
+                        const sortedDates = Object.keys(window.itineraryData).sort();
+                        if (sortedDates.length > 0) {
+                            window.activeDayTab = sortedDates[0];
+                            displayDayDetails(sortedDates[0]);
+                        }
+                        updateStatus("Itinerary loaded.");
                         window.addEventListener('resize', renderDayTabs);
                     } else {
                         console.log("No user signed in.");
                         window.userId = null;
-                        if (userIdDisplay) { // Check if element exists before setting textContent
+                        if (userIdDisplay) {
                             userIdDisplay.textContent = 'User ID: Not authenticated';
                         }
                         updateStatus("Not authenticated. Please refresh if issues persist.", true);
@@ -353,54 +337,36 @@
         }
 
         // Function to parse the initial CSV data
-        // This data now comes from "Disney World Planning Info.xlsx - Intinerary.csv"
         const csvData = `DAY,7/24,7/25,7/26,7/27,7/28,7/29,07/30/2025
-PARK/LOCATION,"Check In Day
-Blizzard Beach","Check In Day
-Typhoon Lagoon","Animal Kingdom
-& Hollywood",Rest,Epcot,Magic Kingdom,Poly Pool
-PARK HOURS,"10:00 AM to 7:00 PM","10:00 AM to 7:00 PM","7:30 AM to 7:00 pm
-8:30 am to 9:00 pm",,"8:30 AM to 11 pm
-Extended Evening","8:30 am to 11 pm",
+PARK/LOCATION,"Check In Day\nBlizzard Beach","Check In Day\nTyphoon Lagoon","Animal Kingdom\n& Hollywood",Rest,Epcot,Magic Kingdom,Poly Pool
+PARK HOURS,"10:00 AM to 7:00 PM","10:00 AM to 7:00 PM","7:30 AM to 7:00 pm\n8:30 am to 9:00 pm",,"8:30 AM to 11 pm\nExtended Evening","8:30 am to 11 pm",
 Arrival Time,,,,,,,
-Lightning Lane MultiPass,,,"Hollywood Studios
-starting at Noon",,,,,
+Lightning Lane MultiPass,,,"Hollywood Studios\nstarting at Noon",,,,,
 Tier 1,,,"Slinky Dog",,Test Track,Jungle Cruise,
 Tier 2,,,"Toy Story Mania",,Spaceship Earth,Pirates,
-Tier 2,,,"Earliest avaiable Tier 2
-(burner ride)",,"Nemo & Friends
-(Burner Ride)","Magic Carpets of Aladdin (burner ride)",
+Tier 2,,,"Earliest avaiable Tier 2\n(burner ride)",,"Nemo & Friends\n(Burner Ride)","Magic Carpets of Aladdin (burner ride)",
 Individual Lighting Lane,,,,Guardians?,Tron,
 ,,,,,
-Rope Drop,,,"Flight of Passage",,Frozen,Peter Pan,
+Rope Drop,,,"Flight of Passage",,Guardians or Frozen,"Tron; Peter Pan",
 ,,,,,
 Snacks,,,,,,,
-Top 3 Priorities,,,"AK - Satu'Ii
-Cheeseburger Steamed Pods",,,,"Gaston's Tavern's Creme Brulee Croissant",,
-,,,"AK - French Fries with Pulled Pork and Cheese - Flame Tree",,,,"Cheeseburger Spring Rolls - Adventure Land",,
-,,,"HW - Ronto Wrap - Galxys Edge",,,,"Chipotle BBQ Loaded Fries - Casey's Corner",,
-,,,,,,,"Corndog - Sleepy Hollow Refreshments",,
+Top 3 Priorities,,,"AK - Satu'Ii\nCheeseburger Steamed Pods",,,,"Gaston's Tavern's Creme Brulee Croissant",
+,,,"AK - French Fries with Pulled Pork and Cheese - Flame Tree",,,,"Cheeseburger Spring Rolls - Adventure Land",
+,,,"HW - Ronto Wrap - Galxys Edge",,,,"Chipotle BBQ Loaded Fries - Casey's Corner",
+,,,,,,,"Corndog - Sleepy Hollow Refreshments",
 Lunch/Dinner,,,,,,,
-Must-Do,,,"AK - Satu'li Canteen - Noodle Bowl
-Cheeseburger Steamed Pods",,,,"Sleep Hollow - Chicke & Waffle",,
-,,,,,,,"Cosmic Rays - Truffle French Onion Burger",,
-,,,,,,,
-,,,"Woody's Round up?",,,,,,
+Must-Do,,,"AK - Satu'li Canteen - Noodle Bowl\nCheeseburger Steamed Pods",,,,"Sleep Hollow - Chicke & Waffle",
+,,,"Woody's Round up?",,,,"Cosmic Rays - Truffle French Onion Burger",
 ,,,"Woody's Lunch box?",,,,,,
 ,,,,,,,
 ,,,,,,,
 Snack,,,,,,,
-Evening Show,"Magic Kingdom Fireworks from Poly","Boardwalk & PuttPutt","Fantasmic: 9 pm
-World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
-9 or 11 pm",`;
+Evening Show,"Magic Kingdom Fireworks from Poly","Boardwalk & PuttPutt","Fantasmic: 9 pm\nWorld of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:\n9 or 11 pm",`;
 
         function parseCSV(csv) {
             const lines = csv.split('\n').map(line => line.trim());
             const parsedItinerary = {};
-            // Trip overview data is NOT in this new CSV, so initialize as empty
-            // Removed: parsedTripOverview as it's now hardcoded in HTML
 
-            // Row indices for daily itinerary based on the NEW CSV content (0-indexed)
             const DAY_ROW_IDX = 0;
             const PARK_LOCATION_ROW_IDX = 1;
             const PARK_HOURS_ROW_IDX = 2;
@@ -410,16 +376,14 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
             const TIER2_ROW_IDX_2 = 7;
             const INDIVIDUAL_LL_ROW_IDX = 8;
             const ROPE_DROP_ROW_IDX = 10;
-            const SNACKS_HEADER_ROW_IDX = 12; // This is the "Snacks" header row
-            const LUNCH_DINNER_HEADER_ROW_IDX = 17; // This is the "Lunch/Dinner" header row
-            const EVENING_SHOW_ROW_IDX = 24; // This is the "Evening Show" header row
+            const SNACKS_HEADER_ROW_IDX = 12;
+            const LUNCH_DINNER_HEADER_ROW_IDX = 17;
+            const EVENING_SHOW_ROW_IDX = 24;
 
 
-            // Helper to get cell value, handling empty strings and quoted commas
             const getCellValue = (rowIdx, col) => {
                 const row = lines[rowIdx];
                 if (!row) return '';
-                // This regex handles commas inside double quotes
                 const cells = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
                 return cells[col] || '';
             };
@@ -429,12 +393,11 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
 
             const dayColumns = [];
             for (let i = 0; i < dayHeaders.length; i++) {
-                // Adjust regex to match "7/24" or "07/30/2025" and convert to YYYY-MM-DD
                 const dateMatch = dayHeaders[i].match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);
                 if (dateMatch) {
                     const month = dateMatch[1].padStart(2, '0');
                     const day = dateMatch[2].padStart(2, '0');
-                    const year = dateMatch[3] || '2025'; // Assume 2025 if year is missing (e.g., "7/24")
+                    const year = dateMatch[3] || '2025';
                     const formattedDate = `${year}-${month}-${day}`;
                     dayColumns.push({ date: formattedDate, index: i });
                 }
@@ -448,7 +411,6 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
                     const items = [];
                     for (let i = startIdx; i <= endIdx; i++) {
                         const item = getCellValue(i, col);
-                        // Only add if item is not empty and not a header for the list
                         if (item && !['Snacks', 'Lunch/Dinner', 'Must-Do', 'Top 3 Priorities', 'Snack'].includes(item.trim())) {
                             items.push(item);
                         }
@@ -466,29 +428,23 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
                 const ropeDrop = getCellValue(ROPE_DROP_ROW_IDX, colIdx);
                 const eveningShow = getCellValue(EVENING_SHOW_ROW_IDX, colIdx);
 
-                // Determine the end index for snacks and lunch/dinner based on the actual content
-                // The image shows "Top 3 Priorities" as a sub-header for snacks
-                // And "Must-Do" as a sub-header for Lunch/Dinner
-                // We need to find the actual content rows for snacks and lunch/dinner
                 let currentSnacksEndIdx = LUNCH_DINNER_HEADER_ROW_IDX - 1;
                 let currentLunchDinnerEndIdx = EVENING_SHOW_ROW_IDX - 1;
 
-                // Find the actual end of the snacks list before the next header
                 for (let i = SNACKS_HEADER_ROW_IDX + 1; i < LUNCH_DINNER_HEADER_ROW_IDX; i++) {
                     if (getCellValue(i, colIdx).trim() === '') {
                         currentSnacksEndIdx = i - 1;
                         break;
                     }
-                    currentSnacksEndIdx = i; // Keep extending if there's content
+                    currentSnacksEndIdx = i;
                 }
 
-                // Find the actual end of the lunch/dinner list before the next header
                 for (let i = LUNCH_DINNER_HEADER_ROW_IDX + 1; i < EVENING_SHOW_ROW_IDX; i++) {
                     if (getCellValue(i, colIdx).trim() === '') {
                         currentLunchDinnerEndIdx = i - 1;
                         break;
                     }
-                    currentLunchDinnerEndIdx = i; // Keep extending if there's content
+                    currentLunchDinnerEndIdx = i;
                 }
 
 
@@ -514,10 +470,10 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
                 };
             });
 
-            return { itinerary: parsedItinerary }; // Removed tripOverview from return
+            return { itinerary: parsedItinerary };
         }
 
-        // Function to save a specific part of the itinerary to Firestore
+        // Function to save a specific part of the itinerary to Firestore (no longer used for daily itinerary)
         window.saveDataToFirestore = window.debounceSave(async (dataType, dataKey, dataToSave) => {
             if (!window.userId || !window.db) {
                 console.error("Firebase not initialized or user not authenticated. Cannot save data.");
@@ -525,11 +481,10 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
                 return;
             }
 
-            // Using projectId as the app_id for Firestore path
             const docRef = doc(window.db, `artifacts/${appId}/users/${window.userId}/itineraryData`, dataKey);
             try {
                 updateStatus("Saving...", false);
-                await setDoc(docRef, dataToSave, { merge: true }); // Use merge to avoid overwriting the entire document
+                await setDoc(docRef, dataToSave, { merge: true });
                 updateStatus("Saved!", false);
                 console.log(`Document ${dataKey} (${dataType}) successfully saved!`);
             } catch (e) {
@@ -538,104 +493,29 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
             }
         });
 
-        // Function to load all itinerary data from Firestore
-        async function loadItineraryFromFirestore(appId) { // Accept appId as argument
+        // Function to load all itinerary data from Firestore (now loads from CSV only)
+        async function loadItineraryFromFirestore(appId) {
             if (!window.userId || !window.db) {
                 console.error("Firebase not initialized or user not authenticated. Cannot load data.");
                 return;
             }
 
-            const itineraryCollectionRef = collection(window.db, `artifacts/${appId}/users/${window.userId}/itineraryData`);
-
-            try {
-                // Removed: onSnapshot listener for "tripOverview" document
-                // Removed: initial CSV trip overview saving
-
-                // Listen for changes to daily itineraries
-                onSnapshot(itineraryCollectionRef, (snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        const docId = change.doc.id;
-                        if (docId === "tripOverview") return; // Skip trip overview here (though it's no longer listened for directly)
-
-                        if (change.type === "added" || change.type === "modified") {
-                            window.itineraryData[docId] = change.doc.data();
-                            console.log(`Daily itinerary for ${docId} loaded/updated.`);
-                            // If the current tab is the one being updated, re-display it
-                            if (window.activeDayTab === docId) { // Compare with date string
-                                displayDayDetails(docId);
-                            }
-                        } else if (change.type === "removed") {
-                            delete window.itineraryData[docId];
-                            console.log(`Daily itinerary for ${docId} removed.`);
-                            // If the removed tab was active, clear details
-                            if (window.activeDayTab === docId) { // Compare with date string
-                                displayDayDetails(null); // Clear content
-                            }
-                        }
-                    });
-
-                    // Re-render tabs if new dates are added or removed
-                    renderDayTabs();
-
-                    // If no tab is active, or the active tab was removed, activate the first one
-                    if (!window.activeDayTab || !window.itineraryData[window.activeDayTab]) {
-                        const sortedDates = Object.keys(window.itineraryData).sort();
-                        if (sortedDates.length > 0) {
-                            window.activeDayTab = sortedDates[0]; // Set active day to the first one
-                            displayDayDetails(sortedDates[0]);
-                        } else {
-                            window.activeDayTab = null;
-                            displayDayDetails(null); // Clear if no data
-                        }
-                    } else {
-                        // Ensure the currently active tab is re-selected visually
-                        displayDayDetails(window.activeDayTab);
-                    }
-                    updateStatus("Itinerary loaded.");
-
-                }, (error) => {
-                    console.error("Error listening to daily itineraries:", error);
-                    updateStatus(`Error loading daily itineraries: ${error.message}`, true);
-                });
-
-                // Initial load: if no data in Firestore, populate from CSV and save
-                const initialDocs = await getDocs(itineraryCollectionRef);
-                if (initialDocs.empty) {
-                    console.log("No data in Firestore. Populating from CSV and saving.");
-                    const { itinerary: csvItinerary } = parseCSV(csvData); // Removed tripOverview from destructuring
-                    // Removed: window.tripOverview = csvTripOverview;
-                    window.itineraryData = csvItinerary;
-
-                    // Removed: Save trip overview
-                    // window.saveDataToFirestore('tripOverview', 'tripOverview', window.tripOverview);
-
-                    // Save each daily itinerary
-                    for (const date in window.itineraryData) {
-                        window.saveDataToFirestore('dailyItinerary', date, window.itineraryData[date]);
-                    }
-                    // Removed: populateTripOverview(window.tripOverview);
-                    renderDayTabs();
-                    const sortedDates = Object.keys(window.itineraryData).sort();
-                    if (sortedDates.length > 0) {
-                        window.activeDayTab = sortedDates[0]; // Set active day to the first one
-                        displayDayDetails(sortedDates[0]);
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading itinerary from Firestore:", error);
-                updateStatus(`Error loading itinerary: ${error.message}`, true);
+            // Load itinerary data directly from CSV (hardcoded)
+            const { itinerary: csvItinerary } = parseCSV(csvData);
+            window.itineraryData = csvItinerary;
+            renderDayTabs();
+            const sortedDates = Object.keys(window.itineraryData).sort();
+            if (sortedDates.length > 0) {
+                window.activeDayTab = sortedDates[0];
+                displayDayDetails(sortedDates[0]);
             }
+            updateStatus("Itinerary loaded.");
         }
 
-        // Removed: Function to populate trip overview details (no longer needed as it's hardcoded)
-        // Removed: Function to add a new hotel entry (no longer needed)
-
-
-        // Function to display details for a selected day
+        // Function to display details for a selected day (no longer editable)
         function displayDayDetails(date) {
             const day = window.itineraryData[date];
             if (!day) {
-                // Clear content if no data for this date
                 if (currentDayDate) currentDayDate.textContent = 'No data for this date.';
                 if (detailLocation) detailLocation.textContent = '';
                 if (detailParkHours) detailParkHours.textContent = '';
@@ -649,74 +529,20 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
                 return;
             }
 
-            if (currentDayDate) currentDayDate.textContent = `Itinerary for ${formatDate(day.date)}`; // Format date here
+            if (currentDayDate) currentDayDate.textContent = `Itinerary for ${formatDate(day.date)}`;
 
-            // Populate and make editable
-            if (detailLocation) {
-                detailLocation.textContent = day.location || '';
-                detailLocation.setAttribute('contenteditable', 'true');
-                detailLocation.onblur = (e) => {
-                    day.location = e.target.textContent.trim();
-                    window.saveDataToFirestore('dailyItinerary', date, day);
-                };
-            }
+            if (detailLocation) detailLocation.textContent = day.location || '';
+            if (detailParkHours) detailParkHours.textContent = day.parkHours || '';
+            if (detailLLTier1) detailLLTier1.innerHTML = `<span class="font-semibold">Tier 1:</span> ${day.lightningLaneTiers.tier1 || ''}`;
+            if (detailLLTier2) detailLLTier2.innerHTML = `<span class="font-semibold">Tier 2:</span> ${day.lightningLaneTiers.tier2 || ''}`;
+            if (detailILL) detailILL.textContent = day.individualLightningLanes || '';
+            if (detailRopeDrop) detailRopeDrop.textContent = day.ropeDrop || '';
+            if (detailEveningShow) detailEveningShow.textContent = day.eveningShow || '';
 
-            if (detailParkHours) {
-                detailParkHours.textContent = day.parkHours || '';
-                detailParkHours.setAttribute('contenteditable', 'true');
-                detailParkHours.onblur = (e) => {
-                    day.parkHours = e.target.textContent.trim();
-                    window.saveDataToFirestore('dailyItinerary', date, day);
-                };
-            }
-
-            if (detailLLTier1) {
-                detailLLTier1.innerHTML = `<span class="font-semibold">Tier 1:</span> <span contenteditable="true" data-field="tier1">${day.lightningLaneTiers.tier1 || ''}</span>`;
-                detailLLTier1.querySelector('[data-field="tier1"]').onblur = (e) => {
-                    day.lightningLaneTiers.tier1 = e.target.textContent.trim();
-                    window.saveDataToFirestore('dailyItinerary', date, day);
-                };
-            }
-
-            if (detailLLTier2) {
-                detailLLTier2.innerHTML = `<span class="font-semibold">Tier 2:</span> <span contenteditable="true" data-field="tier2">${day.lightningLaneTiers.tier2 || ''}</span>`;
-                detailLLTier2.querySelector('[data-field="tier2"]').onblur = (e) => {
-                    day.lightningLaneTiers.tier2 = e.target.textContent.trim();
-                    window.saveDataToFirestore('dailyItinerary', date, day);
-                };
-            }
-
-            if (detailILL) {
-                detailILL.textContent = day.individualLightningLanes || '';
-                detailILL.setAttribute('contenteditable', 'true');
-                detailILL.onblur = (e) => {
-                    day.individualLightningLanes = e.target.textContent.trim();
-                    window.saveDataToFirestore('dailyItinerary', date, day);
-                };
-            }
-
-            if (detailRopeDrop) {
-                detailRopeDrop.textContent = day.ropeDrop || '';
-                detailRopeDrop.setAttribute('contenteditable', 'true');
-                detailRopeDrop.onblur = (e) => {
-                    day.ropeDrop = e.target.textContent.trim();
-                    window.saveDataToFirestore('dailyItinerary', date, day);
-                };
-            }
-
-            if (detailEveningShow) {
-                detailEveningShow.textContent = day.eveningShow || '';
-                detailEveningShow.setAttribute('contenteditable', 'true');
-                detailEveningShow.onblur = (e) => {
-                    day.eveningShow = e.target.textContent.trim();
-                    window.saveDataToFirestore('dailyItinerary', date, day);
-                };
-            }
-
-            displayFoodLists(date); // Call this to handle snacks and meals
+            displayFoodLists(date);
         }
 
-        // Helper to re-render just the food lists after an edit to handle empty items
+        // Helper to re-render just the food lists (no longer editable)
         function displayFoodLists(date) {
             const day = window.itineraryData[date];
             if (!day) return;
@@ -724,102 +550,31 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
             if (detailSnacks) {
                 detailSnacks.innerHTML = '';
                 if (day.food.snacks && day.food.snacks.length > 0) {
-                    day.food.snacks.forEach((snack, index) => {
+                    day.food.snacks.forEach((snack) => {
                         const li = document.createElement('li');
                         li.classList.add('list-item');
-                        const span = document.createElement('span');
-                        span.textContent = snack;
-                        span.setAttribute('contenteditable', 'true');
-                        span.dataset.field = 'snack';
-                        span.dataset.index = index;
-                        li.appendChild(span);
+                        li.textContent = snack;
                         detailSnacks.appendChild(li);
                     });
+                } else {
+                    detailSnacks.innerHTML = '<li class="list-item italic text-gray-500">No snacks planned.</li>';
                 }
-                // Always add an empty editable item for adding new entries
-                const newSnackLi = document.createElement('li');
-                newSnackLi.classList.add('list-item');
-                const newSnackSpan = document.createElement('span');
-                newSnackSpan.textContent = '';
-                newSnackSpan.setAttribute('contenteditable', 'true');
-                newSnackSpan.dataset.field = 'snack';
-                newSnackSpan.dataset.index = (day.food.snacks ? day.food.snacks.length : 0).toString();
-                newSnackLi.appendChild(newSnackSpan);
-                detailSnacks.appendChild(newSnackLi);
-
-                // Re-attach blur listeners for snacks
-                detailSnacks.querySelectorAll('[contenteditable="true"]').forEach(el => {
-                    el.onblur = (e) => {
-                        const index = parseInt(e.target.dataset.index);
-                        const value = e.target.textContent.trim();
-                        if (!day.food.snacks) day.food.snacks = [];
-
-                        if (value === '' && day.food.snacks[index] !== undefined) {
-                            // If an existing item is cleared, remove it
-                            day.food.snacks.splice(index, 1);
-                        } else if (value !== '' && day.food.snacks[index] === undefined) {
-                            // If a new item is added to an empty slot
-                            day.food.snacks.push(value);
-                        } else if (value !== '') {
-                            // If an existing item is modified
-                            day.food.snacks[index] = value;
-                        }
-                        day.food.snacks = day.food.snacks.filter(item => item !== ''); // Final cleanup
-                        window.saveDataToFirestore('dailyItinerary', date, day);
-                        displayFoodLists(date); // Re-render to update indices and add new empty input
-                    };
-                });
             }
-
 
             if (detailLunchDinner) {
                 detailLunchDinner.innerHTML = '';
                 if (day.food.lunchDinner && day.food.lunchDinner.length > 0) {
-                    day.food.lunchDinner.forEach((meal, index) => {
+                    day.food.lunchDinner.forEach((meal) => {
                         const li = document.createElement('li');
                         li.classList.add('list-item');
-                        const span = document.createElement('span');
-                        span.textContent = meal;
-                        span.setAttribute('contenteditable', 'true');
-                        span.dataset.field = 'meal';
-                        span.dataset.index = index;
-                        li.appendChild(span);
+                        li.textContent = meal;
                         detailLunchDinner.appendChild(li);
                     });
+                } else {
+                    detailLunchDinner.innerHTML = '<li class="list-item italic text-gray-500">No lunch/dinner planned.</li>';
                 }
-                // Always add an empty editable item for adding new entries
-                const newMealLi = document.createElement('li');
-                newMealLi.classList.add('list-item');
-                const newMealSpan = document.createElement('span');
-                newMealSpan.textContent = '';
-                newMealSpan.setAttribute('contenteditable', 'true');
-                newMealSpan.dataset.field = 'meal';
-                newMealSpan.dataset.index = (day.food.lunchDinner ? day.food.lunchDinner.length : 0).toString();
-                newMealLi.appendChild(newMealSpan);
-                detailLunchDinner.appendChild(newMealLi);
-
-                // Re-attach blur listeners for lunch/dinner
-                detailLunchDinner.querySelectorAll('[contenteditable="true"]').forEach(el => {
-                    el.onblur = (e) => {
-                        const index = parseInt(e.target.dataset.index);
-                        const value = e.target.textContent.trim();
-                        if (!day.food.lunchDinner) day.food.lunchDinner = [];
-
-                        if (value === '' && day.food.lunchDinner[index] !== undefined) {
-                            day.food.lunchDinner.splice(index, 1);
-                        } else if (value !== '' && day.food.lunchDinner[index] === undefined) {
-                            day.food.lunchDinner.push(value);
-                        } else if (value !== '') {
-                            day.food.lunchDinner[index] = value;
-                        }
-                        day.food.lunchDinner = day.food.lunchDinner.filter(item => item !== '');
-                        window.saveDataToFirestore('dailyItinerary', date, day);
-                        displayFoodLists(date);
-                    };
-                });
             }
         }
-
 
         // Function to render day tabs (responsive)
         function renderDayTabs() {
@@ -828,13 +583,11 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
 
             if (dayTabsContainer) {
                 dayTabsContainer.innerHTML = ''; // Clear existing tabs
-                // Hide or show based on screen size
                 dayTabsContainer.classList.toggle('hidden', isMobile);
                 dayTabsContainer.classList.toggle('flex', !isMobile);
             }
             if (mobileDaySelect) {
                 mobileDaySelect.innerHTML = ''; // Clear existing options
-                // Hide or show based on screen size
                 mobileDaySelect.classList.toggle('hidden', !isMobile);
                 mobileDaySelect.classList.toggle('flex', isMobile);
             }
@@ -852,9 +605,9 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
                     }
 
                     tabHeader.addEventListener('click', () => {
-                        window.activeDayTab = date; // Set active day
+                        window.activeDayTab = date;
                         displayDayDetails(date);
-                        renderDayTabs(); // Re-render to update active class
+                        renderDayTabs();
                     });
                     dayTabsContainer.appendChild(tabHeader);
                 } else if (isMobile && mobileDaySelect) {
@@ -884,74 +637,8 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
             }
         }
 
-        // Function to add a new day to the itinerary
-        function addDay() {
-            showModal('Enter the date for the new day (YYYY-MM-DD):', 'prompt', async (confirmed, dateString) => {
-                if (confirmed && dateString) {
-                    const trimmedDate = dateString.trim();
-                    if (!isValidDate(trimmedDate)) {
-                        showModal('Invalid date format. Please use YYYY-MM-DD.', 'alert');
-                        return;
-                    }
-                    if (window.itineraryData[trimmedDate]) {
-                        showModal(`A day for ${formatDate(trimmedDate)} already exists.`, 'alert');
-                        return;
-                    }
-
-                    const newDayData = {
-                        date: trimmedDate,
-                        location: 'New Location',
-                        parkHours: 'N/A',
-                        lightningLaneMultipass: '',
-                        lightningLaneTiers: { tier1: '', tier2: '' },
-                        individualLightningLanes: '',
-                        ropeDrop: '',
-                        food: { snacks: [], lunchDinner: [] },
-                        eveningShow: ''
-                    };
-
-                    window.itineraryData[trimmedDate] = newDayData;
-                    await window.saveDataToFirestore('dailyItinerary', trimmedDate, newDayData);
-                    window.activeDayTab = trimmedDate; // Set the newly added day as active
-                    renderDayTabs();
-                    displayDayDetails(trimmedDate);
-                    updateStatus(`Day for ${formatDate(trimmedDate)} added successfully!`);
-                }
-            });
-        }
-
-        // Function to remove a day from the itinerary
-        async function removeDay() {
-            if (!window.activeDayTab) {
-                showModal('Please select a day tab to remove first.', 'alert');
-                return;
-            }
-
-            const dateToRemove = window.activeDayTab; // Use the stored activeDayTab date string
-            showModal(`Are you sure you want to remove the itinerary for ${formatDate(dateToRemove)}? This cannot be undone.`, 'confirm', async (confirmed) => {
-                if (confirmed) {
-                    try {
-                        await deleteDoc(doc(window.db, `artifacts/${appId}/users/${window.userId}/itineraryData`, dateToRemove));
-                        delete window.itineraryData[dateToRemove];
-                        window.activeDayTab = null; // Clear active tab
-                        renderDayTabs(); // Re-render to update tabs and select new active if available
-                        // Select the first available tab or clear details if none left
-                        const sortedDates = Object.keys(window.itineraryData).sort();
-                        if (sortedDates.length > 0) {
-                            window.activeDayTab = sortedDates[0];
-                            displayDayDetails(sortedDates[0]);
-                        } else {
-                            displayDayDetails(null); // Clear content
-                        }
-                        updateStatus(`Day for ${formatDate(dateToRemove)} removed successfully!`);
-                    } catch (error) {
-                        console.error("Error removing document: ", error);
-                        updateStatus(`Error removing day: ${error.message}`, true);
-                    }
-                }
-            });
-        }
-
+        // Removed: Function to add a new day to the itinerary
+        // Removed: Function to remove a day from the itinerary
 
         // Initialize Firebase when the window loads
         window.onload = initializeFirebase;
@@ -996,8 +683,8 @@ World of Ani: 9 pm",Luminous: 9 pm,"Disney Starlight:
 
         <div class="mb-6">
             <h2 class="text-2xl font-semibold text-center mb-4 text-indigo-700">Daily Itinerary</h2>
-            <!-- Day Management Buttons -->
-            <div class="flex justify-center gap-4 mb-4">
+            <!-- Day Management Buttons (Removed) -->
+            <div class="flex justify-center gap-4 mb-4 hidden">
                 <button id="add-day-btn" class="btn btn-primary">Add Day</button>
                 <button id="remove-day-btn" class="btn btn-danger">Remove Selected Day</button>
             </div>
